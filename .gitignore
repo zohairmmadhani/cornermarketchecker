@@ -1,6 +1,7 @@
 # Raw source pulls + regenerable intermediates (reproducible via pipeline)
 data/raw/
 data/processed/
+data/geo/
 *.csv.gz
 
 # Python

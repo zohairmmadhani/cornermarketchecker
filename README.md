@@ -1,79 +1,102 @@
 # Supply Cliff Radar — Retiring Solo PCP Intelligence
 
 Finds **aging, solo primary-care physicians who are actively winding down their
-practices** across Arizona and Washington, and shows where their patients are
-about to be orphaned. Built for two Corner Health jobs:
+practices** in **every U.S. state**, shows where their patients are about to be
+orphaned, and hands Corner Health a ready-made argument for payer negotiations.
+Pick a state and you get that state's supply cliff, its county-level need
+ranking, a payer-negotiation playbook, and a view of where Corner should expand
+next.
 
-1. **Payer / insurer negotiations** — address-level proof of coming primary-care
-   access deserts, to pitch insurers on NP clinics as a cost-containment shield.
-2. **Clinic site selection** — micro-markets with imminent orphaned panels where
-   Corner can place an NP clinic across the street and broker a warm handoff.
+**▶ Interactive map:** published as a Claude Artifact. Choose any state from the
+dropdown; the map, stats, playbook and county ranking all update to that state.
+Click any pin for a full provider drill-down card. Serve `web/` and open
+`index.html` locally, or use the shared artifact link.
 
-**▶ Interactive map:** published as a Claude Artifact — open `web/index.html`
-(served over HTTP) or the shared artifact link. Click any pin for a full
-drill-down card; filter and copy the GTM list straight to a spreadsheet.
+Two commercial jobs it serves:
+1. **Payer / insurer negotiations** — address-level proof of coming access
+   deserts, pre-written into three concrete payer arguments.
+2. **Clinic site selection** — the exact counties and ZIPs with imminent
+   orphaned panels where Corner can place an NP clinic.
 
 ---
 
-## What it found (v1, AZ + WA)
+## What it found (national)
 
 | Metric | Count |
 |---|---|
-| Vulnerable solo PCPs (solo, grad yr ≤ 1986) | **188** (105 AZ · 83 WA) |
-| Actively winding down (≥20% fewer Medicare patients 2022→2024, or stopped) | **63** |
-| **Tier A — act now** (winding down *and* thin local supply) | **9** |
-| In thin-supply zones (<20 active PCPs within 4 mi) | 22 |
-| Active PCP supply mapped for context | 9,770 |
+| States / territories covered | **52** |
+| Vulnerable solo PCPs (solo, grad yr ≤ 1986) | **7,338** |
+| Actively winding down (≥20% fewer Medicare patients, or stopped) | **2,302** |
+| Tier A — "act now" (winding down *and* thin local supply) | **488** |
+| Medicare patients attached to winding-down practices | **~273,000** |
+| Active PCPs mapped for supply context | 203,844 |
+| Vulnerable PCPs in Full Practice Authority states | 2,271 |
 
-The 9 **Tier A** providers are the hottest targets: a retiring solo doctor whose
-panel is already shrinking, in a spot with almost no nearby capacity to absorb
-the patients. Example from the data: a 70-year-old family doctor in Yuma, AZ
-whose Medicare panel fell from **871 → 234 patients (−73%)** in two years, with
-only **7** active PCPs within four miles.
-
----
-
-## The three layers (plain-English)
-
-Each layer is a transparent, self-explanatory signal — no black-box score.
-
-**Layer 1 — Vulnerable solo PCP pins (the supply cliff).**
-Every pin is one doctor. We keep only *primary-care physicians* (Family /
-Internal / General practice, MD or DO) who practice *solo* and graduated med
-school in **1986 or earlier** (a proxy for age ~66+). When a doctor inside a big
-health system retires, the system keeps the patients. When a *solo* doctor
-retires, 1,000–1,500 patients are orphaned overnight.
-
-**Layer 2 — 2-year patient decay (active wind-down).**
-We pull each doctor's Medicare billing for 2022 and 2024 and compute the change
-in unique patients. A **≥20% drop** (or stopping Medicare billing entirely)
-flags someone genuinely cutting back — not a healthy 68-year-old still working
-full-time. This is the **pin color**: red = winding down, green = stable.
-
-**Layer 3 — Local PCP saturation (net-deficit proof).**
-For each pin we count how many *active* PCPs sit within a 4-mile drive-time proxy
-and divide by the local population. Few nearby PCPs = no buffer to catch the
-displaced patients = a real desert. This is the **amber ring** on thin-supply
-pins, plus the hex "supply density" wash on the map.
-
-**Priority tier** combines Layers 2 and 3 with two visible booleans (no hidden
-weighting):
-
-- **Tier A** — winding down **and** thin local supply → imminent desert.
-- **Tier B** — one of the two.
-- **Tier C** — neither (monitor).
+Each state view breaks these down locally. Example (Arizona, a Corner market):
+105 vulnerable solo PCPs, 27 winding down, 7 Tier A, with hotspots in Lake
+Havasu City, Surprise and Peoria and a shortage in Pinal County.
 
 ---
 
-## Data sources (all public, all free)
+## The three map layers (plain-English)
 
-| Source | Used for | Access |
+Every layer is a transparent signal — no black-box score.
+
+- **Layer 1 — Vulnerable solo PCP pins.** Each pin is one solo primary-care
+  physician (Family / Internal / General practice, MD/DO) who graduated med
+  school in **1986 or earlier** (proxy for age ~66+). Solo retirements orphan
+  1,000–1,500 patients each; system-employed retirements don't.
+- **Layer 2 — 2-year patient decay (pin color).** Red = lost ≥20% of unique
+  Medicare patients (or stopped billing) between the two most recent CMS years;
+  green = stable.
+- **Layer 3 — local PCP saturation (amber ring + hex shading).** Active PCPs
+  within a 4-mile drive-time proxy, per capita. Few nearby = no buffer to catch
+  displaced patients.
+
+**Priority tier** = two visible booleans: **A** (winding down *and* thin supply),
+**B** (one), **C** (neither).
+
+## The payer-negotiation playbook (per state)
+
+Auto-generated from each state's real numbers, built around three levers:
+
+1. **Network-adequacy risk** — counts the winding-down solo PCPs and the ZIP
+   codes where 2+ are winding down at once (each a ~12-month drive-time
+   compliance gap under MA / state standards), naming the specific ZIPs.
+2. **Facility-fee shield** — the Medicare patients attached to those practices
+   who, if they drift to hospital-owned clinics, cost the plan 2–3× more per
+   visit via facility fees; Corner NPs hold them at ~85–95% of physician rates.
+3. **Auto-assignment targets** — the thinnest-supply counties where unattributed
+   members and HEDIS gaps will concentrate, ripe for auto-assignment or
+   co-funded outreach.
+
+Plus an **immediate ask** and a **counties-most-in-need** ranking.
+
+## Where to expand next
+
+Among **Full Practice Authority** states (where NPs can independently own a
+clinic — AANP, ~2025; the gating filter for Corner today), the tool ranks
+expansion targets by the number of winding-down solo PCPs. Top of the list:
+New York, New Jersey, Maryland, Massachusetts, Oklahoma, Connecticut, Colorado,
+Nevada.
+
+---
+
+## Data — latest available, timestamped in the UI
+
+The pipeline resolves the **newest** files from the CMS catalog on every run and
+stamps each with its publication date (shown in the app's "Data sources" panel,
+each with a direct download link to the authoritative file).
+
+| Source | Used for | Vintage (current) |
 |---|---|---|
-| CMS **Doctors & Clinicians National Downloadable File** (Care Compare) | Layer 1 + 3: who's solo, specialty, grad year, practice address | Full CSV download (~900 MB), filtered to AZ/WA |
-| CMS **Medicare Physician & Other Practitioners — by Provider** (2022, 2024) | Layer 2: unique Medicare beneficiaries per NPI per year | `data.cms.gov` data-API, paged + state-filtered |
-| U.S. Census **ACS 5-yr (2022) B01003** | Layer 3: population denominators by ZIP | Keyless table-based Summary File |
-| U.S. Census **Gazetteer + TIGERweb** | ZIP centroids (geocode fallback) + county/state outlines | Keyless download / ArcGIS GeoJSON |
-| U.S. Census **batch geocoder** | Practice street address → lat/lon | Free, no key, batch endpoint |
+| CMS **Doctors & Clinicians National Downloadable File** (Care Compare) | Layers 1 & 3: solo status, specialty, grad year, address | updated 2026-10-30 |
+| CMS **Medicare Physician & Other Practitioners — by Provider** | Layer 2: unique Medicare beneficiaries per NPI (latest 2 yrs) | CY2024 (rel. 2026-05-21) vs CY2022 |
+| U.S. Census **ACS 5-yr B01003** | population denominators by ZIP | 2022 |
+| U.S. Census **Gazetteer / ZCTA↔County / TIGERweb** | centroids, county roll-ups, boundaries | 2023 / 2020 |
+
+All sources are public and keyless (the Census data API now requires a key, so
+the pipeline uses the keyless Summary File and relationship files instead).
 
 ---
 
@@ -82,95 +105,72 @@ weighting):
 ```bash
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-
-# full pipeline (downloads the ~900 MB Care Compare file on first run)
-python pipeline/run_all.py --download
-
-# subsequent runs reuse cached raw pulls
-python pipeline/run_all.py
+python pipeline/run_all.py          # downloads sources on first run, then caches
+python -m http.server --directory web 8000   # open http://localhost:8000
 ```
 
-Then serve the `web/` folder and open `index.html` (it `fetch()`es the data
-files, so `file://` won't work):
-
-```bash
-python -m http.server --directory web 8000   # http://localhost:8000
-```
-
-### Pipeline steps (each is independently runnable from `pipeline/`)
+Steps (each runnable on its own from `pipeline/`):
 
 | Script | Output |
 |---|---|
-| `step1_carecompare.py` | `vulnerable_pcps.parquet`, `active_pcps.parquet`, `geocode_input.csv` |
-| `step2_partb.py` | `volume_decay.parquet` (+ per-year raw caches) |
-| `step3_geocode.py` | `geocodes.parquet` |
-| `step4_build.py` | `web/data/*.geojson`, `summary.json`, `vulnerable_pcps_export.csv` |
+| `catalog.py` | resolves latest CMS file URLs + publication dates |
+| `step1_carecompare.py` | `vulnerable_pcps.parquet`, `active_by_zip.parquet`, geocode input |
+| `step2_partb.py` | `volume_decay.parquet` from the bulk national Part B CSVs |
+| `step3_geocode.py` | `geocodes.parquet` (Census batch geocoder, ~90% exact) |
+| `fetch_boundaries.py` | national state + county GeoJSON |
+| `step4_build.py` | per-state files, county need, talking points, targets, `summary.json` |
 | `build_map.py` | `web/index.html` (inlines Leaflet CSS) |
 
-All tunables (states, grad-year cutoff, thresholds, dataset IDs) live in
-`pipeline/config.py`.
+Scope, thresholds and the FPA state list live in `pipeline/config.py`.
 
 ---
 
 ## Data roadblocks & how they're handled
 
-Healthcare data is messy. Each known issue is handled explicitly rather than
-silently dropped:
-
-- **CMS suppression (<11 beneficiaries).** Rows with fewer than 11 Medicare
-  patients are suppressed. We treat them as *missing*, not zero, and label such
-  providers `insufficient_medicare_data` — they're flagged as low-Medicare /
-  commercial-heavy, not crashed joins.
-- **Stopped billing Medicare.** A provider who billed in 2022 but not 2024 is
-  `dropout_no_medicare` — the strongest wind-down signal, kept separate from a
-  simple decline.
-- **Dirty / PO-box addresses.** We geocode the Care Compare *practice* street
-  address, deduplicate co-located providers, and fall back to the ZIP centroid
-  when the street can't be matched. Each pin records its `geo_source`
-  (`census_exact` / `census_nonexact` / `zcta_centroid`). Match rate: **92%
-  exact street-level**, 8% ZIP-centroid fallback, 1 unplaceable.
-- **Missing graduation years.** Only 77 of ~151k AZ/WA rows lack a grad year;
-  providers without one simply don't qualify for the age filter (surfaced, not
-  guessed).
-- **Solo detection.** Care Compare's group-size field never equals 1, so a true
-  sole proprietor is identified by a *null organization affiliation*; we also
-  admit practices that never exceed 2 members (`solo_duo`).
+- **CMS suppression (<11 beneficiaries)** → treated as missing, labelled
+  `insufficient_medicare_data`, never zero.
+- **Stopped billing Medicare** → `dropout_no_medicare`, the strongest wind-down
+  signal, kept separate from a decline.
+- **Dirty / PO-box addresses** → geocode the practice street address (Census
+  batch), fall back to ZIP centroid; each pin records its `geo_source`.
+- **Solo detection** → Care Compare's group-size never equals 1, so a sole
+  proprietor is a *null org affiliation*; practices never exceeding 2 members
+  count as `solo_duo`.
+- **Census API key requirement** → bypassed with keyless Summary / relationship
+  files.
 
 ### Known MVP limitations (verify before outreach)
 
-- **Per-capita ratios are approximate in sparse rural areas.** Population is
-  summed from ZIP (ZCTA) *centroids* within the catchment radius; where a rural
-  ZIP's centroid falls just outside the radius, the population denominator can be
-  understated. **The nearby-PCP count is exact**; the `pcps_per_10k` ratio is a
-  secondary signal and is shown as `—` where it can't be computed.
-- **The hex "supply density" layer** shows active-PCP *counts* (robust), not the
-  noisy per-capita ratio.
-- **Active PCP supply = physicians only.** NP/PA primary-care supply isn't
-  separable in Care Compare's specialty field and is a planned enrichment.
-- Grad year is an age *proxy*; a handful of providers may be semi-retired
-  already or practicing well past 66.
+- **Per-capita ratios are approximate in sparse rural areas** (ZIP-centroid
+  population within a tight radius). The nearby-PCP *count* is exact; the
+  `pcps_per_10k` ratio is secondary and shown as `—` where it can't be computed.
+- **Active PCP supply = physicians only** (NP/PA primary care isn't separable in
+  Care Compare's specialty field — a planned enrichment).
+- **Grad year is an age proxy.** The **FPA state list** is from AANP ~2025 and
+  changes with legislation (OK added Nov 2025) — verify before acting.
+- County shortage uses a HRSA-style <2.9 PCP/10k threshold; dense urban counties
+  rarely trip it even when specific ZIPs are deserts (the ZIP hotspots catch
+  those).
 
 ---
 
 ## Extending it
 
-- **More states:** add to `STATES` and `ZIP_PREFIXES` in `config.py`. The whole
-  pipeline is national-ready; AZ/WA is just the v1 filter (FPA states Corner
-  operates in). CMS/Census pulls already scale.
+- **Scope** is already national; `config.STATES` / `FPA_STATES` are the only
+  knobs. The per-state file structure scales without UI changes.
 - **Leading-indicator enrichment:** `pipeline/enrichment_adapters.py` has stable,
-  off-by-default hooks for **state medical-board license expirations** (AZ/WA
-  bulk files), **Google Places** hours/closure/review signals, and **NPPES urgent
-  care** locations. Each returns an NPI-keyed frame that left-joins in `step4`
-  without touching the core pipeline.
+  off-by-default hooks for **state medical-board license expirations**, **Google
+  Places** hours/closure signals, and **NPPES urgent care** locations — each
+  returns an NPI-keyed frame that left-joins in `step4`.
 
 ---
 
 ## Repo layout
 
 ```
-pipeline/            ETL + build scripts (config, step1-4, build_map, run_all, adapters)
-data/raw/            cached source pulls (gitignored; reproducible)
-data/processed/      intermediate parquet + the GTM CSV export
-web/                 the map: app.html (source) -> index.html (built), data/, vendor/
-web/data/            geojson + summary + CSV the map loads
+pipeline/     catalog, config, step1-4, fetch_boundaries, build_map, run_all, adapters
+data/raw/     cached source pulls (gitignored; reproducible)
+data/geo/     intermediate national boundaries (gitignored)
+web/          app.html (source) -> index.html (built), vendor/leaflet, data/
+web/data/     summary.json, us_states.geojson, states/<ST>.json, export CSV
 ```
