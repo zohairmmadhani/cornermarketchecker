@@ -80,6 +80,11 @@ header{display:flex;align-items:center;gap:12px;padding:9px 16px;background:var(
 .mapwrap{position:relative;min-width:0;min-height:0}
 #map{position:absolute;inset:0}
 .leaflet-container{background:var(--map-bg);font-family:var(--font)}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--surface);color:var(--fg);box-shadow:var(--shadow)}
+.leaflet-popup-content{margin:9px 12px;font-size:12px;line-height:1.55}
+.leaflet-popup-close-button{color:var(--muted)}
+.cpop b{display:block;margin-bottom:3px;font-size:12.5px;font-family:var(--display)}
+.cp-red{color:var(--crit);font-weight:700} .cp-warn{color:var(--warn);font-weight:700}
 .leaflet-interactive:focus{outline:none}
 
 .block{display:flex;flex-direction:column;gap:9px}
@@ -113,7 +118,7 @@ header{display:flex;align-items:center;gap:12px;padding:9px 16px;background:var(
 .finder-result .open{color:var(--accent-ink);font-weight:600}
 .lede{margin:0;font-size:13px;line-height:1.5;color:var(--fg)}
 .lede b{color:var(--crit)}
-.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .stat{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:10px 11px}
 .stat .n{font-family:var(--display);font-size:21px;font-weight:600;letter-spacing:-.02em;line-height:1}
 .stat .l{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.25}
@@ -280,47 +285,16 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
 
   <div class="body">
     <aside class="rail" id="rail">
-      <div class="block">
+      <div class="block" id="playBlock">
         <div class="stateline"><h2 id="stName">—</h2><span id="stBadge"></span></div>
-        <p class="lede" id="lede"></p>
+        <select class="mini" id="payerSelect" style="margin-top:2px"></select>
         <div class="stats" id="stats"></div>
-      </div>
-
-      <div class="block collap" id="playBlock">
-        <div class="hd"><h2>⚑ Payer playbook</h2><span class="chev">▾</span></div>
-        <div class="body2" style="display:flex;flex-direction:column;gap:9px">
-          <div class="field"><label>Pitch tailored for</label>
-            <select class="mini" id="payerSelect"></select></div>
-          <div class="playbook" id="playbook"></div>
-          <div id="payerCounties"></div>
-          <button class="btn ghost" id="copyPlay">⧉ Copy talking points</button>
-        </div>
+        <div id="payerCounties"></div>
       </div>
 
       <div class="block collap" id="needBlock">
         <div class="hd"><h2>Counties in need</h2><span class="chev">▾</span></div>
         <div class="body2"><div class="needtbl" id="needtbl"></div></div>
-      </div>
-
-      <div class="block collap" id="ctlBlock">
-        <div class="hd"><h2>Layers &amp; filters</h2><span class="chev">▾</span></div>
-        <div class="body2" style="display:flex;flex-direction:column;gap:9px">
-          <div class="ctl">
-            <label class="toggle"><input type="checkbox" id="L_pins" checked><span>Retiring doctors</span><span class="sw" id="n_pins"></span></label>
-            <label class="toggle"><input type="checkbox" id="L_supply" checked><span>Primary-care supply</span><span class="sw">counties</span></label>
-          </div>
-          <div class="field"><label>Priority tier</label>
-            <div class="seg" id="segTier"><button data-v="all" aria-pressed="true">All</button>
-              <button data-v="A">A</button><button data-v="B">B</button><button data-v="C">C</button></div></div>
-          <div class="field"><label>Primary specialty</label>
-            <select class="mini" id="selSpec"><option value="all">All primary care</option>
-              <option value="FAMILY PRACTICE">Family practice</option>
-              <option value="INTERNAL MEDICINE">Internal medicine</option>
-              <option value="GENERAL PRACTICE">General practice</option></select></div>
-          <label class="toggle"><input type="checkbox" id="fWind"><span>Only winding down</span><span class="dot" style="background:var(--crit)"></span></label>
-          <label class="toggle"><input type="checkbox" id="fThin"><span>Only thin local supply</span><span class="dot" style="background:var(--warn)"></span></label>
-          <button class="btn" id="exportBtn">⧉ Copy this list as CSV</button>
-        </div>
       </div>
 
       <div class="block collap" id="srcBlock">
@@ -424,24 +398,16 @@ async function selectState(st){
   const s=SUMMARY.states[st];
   STATE=await j('states/'+st+'.json');
   curPins=STATE.pins;
-  renderStats(st,s);buildPayerSelect();renderPlaybook();renderNeed();
+  renderHeader(st,s);buildPayerSelect();renderView();renderNeed();
   drawLayers();applyFilter();
   if(STATE.bbox){const[a,b,c,d]=STATE.bbox;map.flyToBounds([[b,a],[d,c]],{padding:[40,40],duration:.5});}
 }
 
-function renderStats(st,s){
-  const zr=$('#zipResult');if(zr){zr.className='finder-result';zr.innerHTML='';}
+function renderHeader(st,s){
   $('#stName').textContent=s.name;
   const bmap={active:['active','Corner market'],expansion:['expansion','Planned'],fpa:['fpa','NP can own a clinic'],non_fpa:['non','NP ownership restricted']};
   const[cls,lbl]=bmap[s.corner_status];
   $('#stBadge').innerHTML=`<span class="badge ${cls}">${lbl}</span>`;
-  $('#lede').innerHTML=s.lede.replace(/^(\d[\d,]*)/,'<b>$1</b>')
-    +` <span style="color:var(--faint)">(${SUMMARY.national.winddown_total.toLocaleString()} are winding down across ${SUMMARY.national.states_covered} states.)</span>`;
-  $('#stats').innerHTML=`
-    <div class="stat crit"><div class="n tnum">${s.winddown}</div><div class="l">Doctors winding down</div></div>
-    <div class="stat accent"><div class="n tnum">~${Math.round(s.est_patients_at_risk/1000)}k</div><div class="l">Patients need a new PCP</div></div>
-    <div class="stat"><div class="n tnum">${s.vulnerable}</div><div class="l">On watch list (66+)</div></div>`;
-  $('#n_pins').textContent=s.vulnerable;
 }
 
 function buildPayerSelect(){
@@ -450,20 +416,30 @@ function buildPayerSelect(){
     +(STATE.payers||[]).map((p,i)=>`<option value="${i}">${p.name} · ${p.state_members.toLocaleString()} MA members</option>`).join('');
   sel.value='all';
 }
-let curTalkingPoints=[];
-function renderPlaybook(){
+function renderView(){
   const v=($('#payerSelect')&&$('#payerSelect').value)||'all';
-  let tps, ec='';
-  if(v==='all'||!STATE.payers){tps=STATE.talking_points;}
-  else{
-    const p=STATE.payers[+v];tps=p.talking_points;
+  const s=SUMMARY.states[STATE.state];
+  let stats, ec='';
+  if(v==='all'||!STATE.payers||!STATE.payers.length){
+    const dy=SUMMARY.data_years||{};
+    stats=`
+      <div class="stat crit"><div class="n tnum">${s.winddown}</div><div class="l">Winding down</div></div>
+      <div class="stat accent"><div class="n tnum">~${Math.round(s.est_patients_at_risk/1000)}k</div><div class="l">Patients need a PCP</div></div>
+      <div class="stat warn"><div class="n tnum">${s.steep_stopped}</div><div class="l">Steep drop or stopped</div></div>
+      <div class="stat"><div class="n tnum">${s.vulnerable}</div><div class="l">Solo PCPs, age 66+</div></div>`;
+    ec=`<div class="footnote" style="margin-top:4px"><b>Winding down</b> = a solo doctor's unique fee-for-service Medicare patients fell ≥20% ${dy.partb_base||''}→${dy.partb_latest||''} <i>faster than their county's PCP market</i>, or they stopped billing. <b>Solo</b> = sole owner or ≤2-doc practice, est. age 66+. ${s.provider_specific} of the ${s.winddown} show a provider-specific decline (steeper than the local market).</div>`;
+  }else{
+    const p=STATE.payers[+v];
+    stats=`
+      <div class="stat accent"><div class="n tnum">${fmt(p.state_members)}</div><div class="l">${p.name} MA members</div></div>
+      <div class="stat crit"><div class="n tnum">${fmt(p.exposed_members)}</div><div class="l">In retiring-PCP counties</div></div>
+      <div class="stat warn"><div class="n tnum">${p.exposed_counties.length}</div><div class="l">Exposed counties</div></div>`;
     if(p.exposed_counties.length){
-      ec=`<div class="footnote" style="margin:1px 0 3px">${p.name}'s most exposed counties — click to view:</div>`
+      ec=`<div class="footnote" style="margin:4px 0 3px">${p.name}'s most exposed counties — click to view:</div>`
         +p.exposed_counties.map(c=>`<div class="ec-row" onclick="highlightCounty('${c.fips}')"><b>${c.county.replace(' County','')}</b> · ${c.members.toLocaleString()} members (${c.share}% of MA) · ${c.winddown} retiring</div>`).join('');
     }
   }
-  curTalkingPoints=tps;
-  $('#playbook').innerHTML=tps.map(t=>`<div class="tp">${boldmd(t)}</div>`).join('');
+  $('#stats').innerHTML=stats;
   $('#payerCounties').innerHTML=ec;
 }
 function renderNeed(){
@@ -479,7 +455,7 @@ function renderNeed(){
 }
 function highlightCounty(fips){
   if(!ctyLayer)return;
-  if(!map.hasLayer(ctyLayer)){ctyLayer.addTo(map);$('#L_supply').checked=true;}
+  if(!map.hasLayer(ctyLayer))ctyLayer.addTo(map);
   let props=null,target=null;
   ctyLayer.eachLayer(l=>{
     if(l.feature.properties.GEOID===fips){l.setStyle({color:gv('--accent'),weight:3,fillOpacity:.78});l.bringToFront();target=l;props=l.feature.properties;}
@@ -490,13 +466,19 @@ function highlightCounty(fips){
 }
 window.highlightCounty=highlightCounty;
 
+function countyPopup(p){
+  const per=p.supply_per_10k, short=per!=null&&per<2.9;
+  return `<div class="cpop"><b>${p.NAME}, ${STATE.state}</b>
+    <div><span class="cp-red">${p.winddown||0}</span> solo PCP(s) winding down · ${p.vulnerable||0} at-risk (66+)</div>
+    <div>${fmt(p.active_pcps)} active PCPs · <span class="${short?'cp-warn':''}">${per!=null?per:'—'} per 10k residents</span></div></div>`;
+}
 function drawLayers(){
   [ctyLayer,pinLayer].forEach(l=>{if(l)map.removeLayer(l);});
   ctyLayer=L.geoJSON({type:'FeatureCollection',features:STATE.counties},{pane:'cty',interactive:true,
     style:countyStyle,
-    onEachFeature:(f,l)=>{const v=f.properties.supply_per_10k;
-      l.bindTooltip(`<b>${f.properties.NAME}</b><br>${v!=null?v+' PCPs / 10k residents':'no data'}`,{sticky:true});}});
-  if($('#L_supply').checked)ctyLayer.addTo(map);
+    onEachFeature:(f,l)=>{l.bindTooltip(f.properties.NAME,{sticky:true});
+      l.bindPopup(countyPopup(f.properties),{className:'cty-popup'});}});
+  ctyLayer.addTo(map);
   pinLayer=L.layerGroup([],{pane:'pins'}).addTo(map);
 }
 
@@ -509,7 +491,7 @@ function passes(p){
 }
 function applyFilter(){
   pinLayer.clearLayers();curFiltered=[];
-  if($('#L_pins').checked)for(const f of curPins){
+  for(const f of curPins){
     const p=f.properties;if(!passes(p))continue;curFiltered.push(f);
     const ll=[f.geometry.coordinates[1],f.geometry.coordinates[0]];
     const m=L.circleMarker(ll,{pane:'pins',radius:pinRadius(p.benes_base),fillColor:trendColor(p.winddown_status),
@@ -523,8 +505,8 @@ function applyFilter(){
 
 /* detail card */
 function openDetail(p,ll){
-  const tm={A:['crit','Tier A · Imminent desert'],B:['warn','Tier B · Active watch'],C:['flat','Tier C · Monitor']};
-  const[tc,tl]=tm[p.priority_tier]||['flat','—'];
+  const bandColor={stopped:'crit',steep:'crit',declining:'warn',slight:'flat',stable:'ok',nodata:'flat'};
+  const tc=bandColor[p.decline_band]||'flat', tl=p.band_label||'—';
   const dy=SUMMARY.data_years||{},by=dy.partb_base||'base',ly=dy.partb_latest||'latest';
   const sp=p.is_winddown?'<span class="pill crit">● Actively winding down</span>'
     :(p.winddown_status==='stable_or_growing'?'<span class="pill ok">● Stable / growing</span>':'<span class="pill flat">○ No Medicare signal</span>');
@@ -540,7 +522,7 @@ function openDetail(p,ll){
       <dt>County</dt><dd>${p.county||'—'}</dd>
       <dt>Address</dt><dd>${p.address} <button class="copyaddr" onclick="copyText(this.dataset.a,'Address copied')" data-a="${(p.address||'').replace(/"/g,'&quot;')}">copy</button></dd>
       <dt>Phone</dt><dd>${p.phone||'—'}</dd></dl>
-    <div class="card"><h3>2-year Medicare volume <span class="asof">CMS Part B · ${by} → ${ly}</span></h3>${trendBlock(p)}</div>
+    <div class="card"><h3>2-year Medicare volume <span class="asof">CMS Part B · ${by} → ${ly}</span></h3>${trendBlock(p)}${marketBlock(p)}</div>
     <div class="card"><h3>Local supply · 4-mi catchment <span class="asof">Care Compare ${dy.care_compare||''} · pop ACS ${dy.acs||''}</span></h3>
       <div class="supply">
         <div class="s"><div class="n tnum">${fmt(p.nearby_active_pcps)}</div><div class="l">PCPs within 4 mi</div></div>
@@ -550,6 +532,12 @@ function openDetail(p,ll){
     <div class="note">Per-capita ratios approximate in rural areas; count is exact.</div></div>`;
   $('#detail').classList.add('open');
   if(ll)map.panTo(ll,{animate:true});
+}
+function marketBlock(p){
+  if(p.local_market_trend==null||p.benes_pct_change==null)return '';
+  const lm=p.local_market_trend, ps=p.provider_specific;
+  return `<div class="note" style="margin-top:9px">Local PCP market, same county (fee-for-service Medicare): <b style="color:${lm<0?gv('--warn'):gv('--ok')}">${lm>0?'+':''}${lm}%</b>. ${ps?'This practice fell <b>far faster than its market</b> — provider-specific, consistent with the doctor winding down.':'<b>In line with the local market</b> — this drop may be area-wide (e.g. seniors switching to Medicare Advantage); verify before outreach.'}</div>
+    <div class="note" style="margin-top:6px">Part B counts fee-for-service Medicare only; a decline can also mean patients moved to Medicare Advantage — the market comparison controls for that.</div>`;
 }
 function trendBlock(p){
   const b=p.benes_base,l=p.benes_latest;
@@ -602,18 +590,7 @@ window.copyText=copyText;
 
 function wire(){
   $('#stateSelect').onchange=e=>selectState(e.target.value);
-  $('#L_pins').onchange=applyFilter;
-  $('#L_supply').onchange=e=>{e.target.checked?ctyLayer.addTo(map):map.removeLayer(ctyLayer);};
-  document.querySelectorAll('#segTier button').forEach(b=>b.onclick=()=>{
-    document.querySelectorAll('#segTier button').forEach(x=>x.setAttribute('aria-pressed','false'));
-    b.setAttribute('aria-pressed','true');F.tier=b.dataset.v;applyFilter();});
-  $('#selSpec').onchange=e=>{F.spec=e.target.value;applyFilter();};
-  $('#fWind').onchange=e=>{F.wind=e.target.checked;applyFilter();};
-  $('#fThin').onchange=e=>{F.thin=e.target.checked;applyFilter();};
-  $('#exportBtn').onclick=()=>{if(!curFiltered.length){toast('No pins match');return;}
-    copyText(toCSV(),curFiltered.length+' providers copied as CSV','Vulnerable PCP list (CSV)');};
-  $('#payerSelect').onchange=renderPlaybook;
-  $('#copyPlay').onclick=()=>copyText((curTalkingPoints||STATE.talking_points).map(t=>t.replace(/\*\*/g,'')).join('\n\n'),'Talking points copied','Payer talking points');
+  $('#payerSelect').onchange=renderView;
   $('#railToggle').onclick=()=>$('#rail').classList.toggle('open');
   $('#copyClose').onclick=()=>$('#copybox').classList.remove('show');
   $('#themeBtn').onclick=toggleTheme;
