@@ -1,0 +1,606 @@
+<title>Supply Cliff Radar</title>
+<style>
+/* Leaflet 1.9.4 */
+.leaflet-image-layer,.leaflet-layer,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-pane,.leaflet-pane>canvas,.leaflet-pane>svg,.leaflet-tile,.leaflet-tile-container,.leaflet-zoom-box{position:absolute;left:0;top:0}.leaflet-container{overflow:hidden}.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-user-drag:none}.leaflet-tile::selection{background:0 0}.leaflet-safari .leaflet-tile{image-rendering:-webkit-optimize-contrast}.leaflet-safari .leaflet-tile-container{width:1600px;height:1600px;-webkit-transform-origin:0 0}.leaflet-marker-icon,.leaflet-marker-shadow{display:block}.leaflet-container .leaflet-overlay-pane svg{max-width:none!important;max-height:none!important}.leaflet-container .leaflet-marker-pane img,.leaflet-container .leaflet-shadow-pane img,.leaflet-container .leaflet-tile,.leaflet-container .leaflet-tile-pane img,.leaflet-container img.leaflet-image-layer{max-width:none!important;max-height:none!important;width:auto;padding:0}.leaflet-container img.leaflet-tile{mix-blend-mode:plus-lighter}.leaflet-container.leaflet-touch-zoom{-ms-touch-action:pan-x pan-y;touch-action:pan-x pan-y}.leaflet-container.leaflet-touch-drag{-ms-touch-action:pinch-zoom;touch-action:none;touch-action:pinch-zoom}.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom{-ms-touch-action:none;touch-action:none}.leaflet-container{-webkit-tap-highlight-color:transparent}.leaflet-container a{-webkit-tap-highlight-color:rgba(51,181,229,.4)}.leaflet-tile{filter:inherit;visibility:hidden}.leaflet-tile-loaded{visibility:inherit}.leaflet-zoom-box{width:0;height:0;-moz-box-sizing:border-box;box-sizing:border-box;z-index:800}.leaflet-overlay-pane svg{-moz-user-select:none}.leaflet-pane{z-index:400}.leaflet-tile-pane{z-index:200}.leaflet-overlay-pane{z-index:400}.leaflet-shadow-pane{z-index:500}.leaflet-marker-pane{z-index:600}.leaflet-tooltip-pane{z-index:650}.leaflet-popup-pane{z-index:700}.leaflet-map-pane canvas{z-index:100}.leaflet-map-pane svg{z-index:200}.leaflet-vml-shape{width:1px;height:1px}.lvml{behavior:url(#default#VML);display:inline-block;position:absolute}.leaflet-control{position:relative;z-index:800;pointer-events:visiblePainted;pointer-events:auto}.leaflet-bottom,.leaflet-top{position:absolute;z-index:1000;pointer-events:none}.leaflet-top{top:0}.leaflet-right{right:0}.leaflet-bottom{bottom:0}.leaflet-left{left:0}.leaflet-control{float:left;clear:both}.leaflet-right .leaflet-control{float:right}.leaflet-top .leaflet-control{margin-top:10px}.leaflet-bottom .leaflet-control{margin-bottom:10px}.leaflet-left .leaflet-control{margin-left:10px}.leaflet-right .leaflet-control{margin-right:10px}.leaflet-fade-anim .leaflet-popup{opacity:0;-webkit-transition:opacity .2s linear;-moz-transition:opacity .2s linear;transition:opacity .2s linear}.leaflet-fade-anim .leaflet-map-pane .leaflet-popup{opacity:1}.leaflet-zoom-animated{-webkit-transform-origin:0 0;-ms-transform-origin:0 0;transform-origin:0 0}svg.leaflet-zoom-animated{will-change:transform}.leaflet-zoom-anim .leaflet-zoom-animated{-webkit-transition:-webkit-transform .25s cubic-bezier(0,0,.25,1);-moz-transition:-moz-transform .25s cubic-bezier(0,0,.25,1);transition:transform .25s cubic-bezier(0,0,.25,1)}.leaflet-pan-anim .leaflet-tile,.leaflet-zoom-anim .leaflet-tile{-webkit-transition:none;-moz-transition:none;transition:none}.leaflet-zoom-anim .leaflet-zoom-hide{visibility:hidden}.leaflet-interactive{cursor:pointer}.leaflet-grab{cursor:-webkit-grab;cursor:-moz-grab;cursor:grab}.leaflet-crosshair,.leaflet-crosshair .leaflet-interactive{cursor:crosshair}.leaflet-control,.leaflet-popup-pane{cursor:auto}.leaflet-dragging .leaflet-grab,.leaflet-dragging .leaflet-grab .leaflet-interactive,.leaflet-dragging .leaflet-marker-draggable{cursor:move;cursor:-webkit-grabbing;cursor:-moz-grabbing;cursor:grabbing}.leaflet-image-layer,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-pane>svg path,.leaflet-tile-container{pointer-events:none}.leaflet-image-layer.leaflet-interactive,.leaflet-marker-icon.leaflet-interactive,.leaflet-pane>svg path.leaflet-interactive,svg.leaflet-image-layer.leaflet-interactive path{pointer-events:visiblePainted;pointer-events:auto}.leaflet-container{background:#ddd;outline-offset:1px}.leaflet-container a{color:#0078a8}.leaflet-zoom-box{border:2px dotted #38f;background:rgba(255,255,255,.5)}.leaflet-container{font-family:"Helvetica Neue",Arial,Helvetica,sans-serif;font-size:12px;font-size:.75rem;line-height:1.5}.leaflet-bar{box-shadow:0 1px 5px rgba(0,0,0,.65);border-radius:4px}.leaflet-bar a{background-color:#fff;border-bottom:1px solid #ccc;width:26px;height:26px;line-height:26px;display:block;text-align:center;text-decoration:none;color:#000}.leaflet-bar a,.leaflet-control-layers-toggle{background-position:50% 50%;background-repeat:no-repeat;display:block}.leaflet-bar a:focus,.leaflet-bar a:hover{background-color:#f4f4f4}.leaflet-bar a:first-child{border-top-left-radius:4px;border-top-right-radius:4px}.leaflet-bar a:last-child{border-bottom-left-radius:4px;border-bottom-right-radius:4px;border-bottom:none}.leaflet-bar a.leaflet-disabled{cursor:default;background-color:#f4f4f4;color:#bbb}.leaflet-touch .leaflet-bar a{width:30px;height:30px;line-height:30px}.leaflet-touch .leaflet-bar a:first-child{border-top-left-radius:2px;border-top-right-radius:2px}.leaflet-touch .leaflet-bar a:last-child{border-bottom-left-radius:2px;border-bottom-right-radius:2px}.leaflet-control-zoom-in,.leaflet-control-zoom-out{font:bold 18px 'Lucida Console',Monaco,monospace;text-indent:1px}.leaflet-touch .leaflet-control-zoom-in,.leaflet-touch .leaflet-control-zoom-out{font-size:22px}.leaflet-control-layers{box-shadow:0 1px 5px rgba(0,0,0,.4);background:#fff;border-radius:5px}.leaflet-control-layers-toggle{background-image:url(images/layers.png);width:36px;height:36px}.leaflet-retina .leaflet-control-layers-toggle{background-image:url(images/layers-2x.png);background-size:26px 26px}.leaflet-touch .leaflet-control-layers-toggle{width:44px;height:44px}.leaflet-control-layers .leaflet-control-layers-list,.leaflet-control-layers-expanded .leaflet-control-layers-toggle{display:none}.leaflet-control-layers-expanded .leaflet-control-layers-list{display:block;position:relative}.leaflet-control-layers-expanded{padding:6px 10px 6px 6px;color:#333;background:#fff}.leaflet-control-layers-scrollbar{overflow-y:scroll;overflow-x:hidden;padding-right:5px}.leaflet-control-layers-selector{margin-top:2px;position:relative;top:1px}.leaflet-control-layers label{display:block;font-size:13px;font-size:1.08333em}.leaflet-control-layers-separator{height:0;border-top:1px solid #ddd;margin:5px -10px 5px -6px}.leaflet-default-icon-path{background-image:url(images/marker-icon.png)}.leaflet-container .leaflet-control-attribution{background:#fff;background:rgba(255,255,255,.8);margin:0}.leaflet-control-attribution,.leaflet-control-scale-line{padding:0 5px;color:#333;line-height:1.4}.leaflet-control-attribution a{text-decoration:none}.leaflet-control-attribution a:focus,.leaflet-control-attribution a:hover{text-decoration:underline}.leaflet-attribution-flag{display:inline!important;vertical-align:baseline!important;width:1em;height:.6669em}.leaflet-left .leaflet-control-scale{margin-left:5px}.leaflet-bottom .leaflet-control-scale{margin-bottom:5px}.leaflet-control-scale-line{border:2px solid #777;border-top:none;line-height:1.1;padding:2px 5px 1px;white-space:nowrap;-moz-box-sizing:border-box;box-sizing:border-box;background:rgba(255,255,255,.8);text-shadow:1px 1px #fff}.leaflet-control-scale-line:not(:first-child){border-top:2px solid #777;border-bottom:none;margin-top:-2px}.leaflet-control-scale-line:not(:first-child):not(:last-child){border-bottom:2px solid #777}.leaflet-touch .leaflet-bar,.leaflet-touch .leaflet-control-attribution,.leaflet-touch .leaflet-control-layers{box-shadow:none}.leaflet-touch .leaflet-bar,.leaflet-touch .leaflet-control-layers{border:2px solid rgba(0,0,0,.2);background-clip:padding-box}.leaflet-popup{position:absolute;text-align:center;margin-bottom:20px}.leaflet-popup-content-wrapper{padding:1px;text-align:left;border-radius:12px}.leaflet-popup-content{margin:13px 24px 13px 20px;line-height:1.3;font-size:13px;font-size:1.08333em;min-height:1px}.leaflet-popup-content p{margin:17px 0;margin:1.3em 0}.leaflet-popup-tip-container{width:40px;height:20px;position:absolute;left:50%;margin-top:-1px;margin-left:-20px;overflow:hidden;pointer-events:none}.leaflet-popup-tip{width:17px;height:17px;padding:1px;margin:-10px auto 0;pointer-events:auto;-webkit-transform:rotate(45deg);-moz-transform:rotate(45deg);-ms-transform:rotate(45deg);transform:rotate(45deg)}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#fff;color:#333;box-shadow:0 3px 14px rgba(0,0,0,.4)}.leaflet-container a.leaflet-popup-close-button{position:absolute;top:0;right:0;border:none;text-align:center;width:24px;height:24px;font:16px/24px Tahoma,Verdana,sans-serif;color:#757575;text-decoration:none;background:0 0}.leaflet-container a.leaflet-popup-close-button:focus,.leaflet-container a.leaflet-popup-close-button:hover{color:#585858}.leaflet-popup-scrolled{overflow:auto}.leaflet-oldie .leaflet-popup-content-wrapper{-ms-zoom:1}.leaflet-oldie .leaflet-popup-tip{width:24px;margin:0 auto}.leaflet-oldie .leaflet-control-layers,.leaflet-oldie .leaflet-control-zoom,.leaflet-oldie .leaflet-popup-content-wrapper,.leaflet-oldie .leaflet-popup-tip{border:1px solid #999}.leaflet-div-icon{background:#fff;border:1px solid #666}.leaflet-tooltip{position:absolute;padding:6px;background-color:#fff;border:1px solid #fff;border-radius:3px;color:#222;white-space:nowrap;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.4)}.leaflet-tooltip.leaflet-interactive{cursor:pointer;pointer-events:auto}.leaflet-tooltip-bottom:before,.leaflet-tooltip-left:before,.leaflet-tooltip-right:before,.leaflet-tooltip-top:before{position:absolute;pointer-events:none;border:6px solid transparent;background:0 0;content:""}.leaflet-tooltip-bottom{margin-top:6px}.leaflet-tooltip-top{margin-top:-6px}.leaflet-tooltip-bottom:before,.leaflet-tooltip-top:before{left:50%;margin-left:-6px}.leaflet-tooltip-top:before{bottom:0;margin-bottom:-12px;border-top-color:#fff}.leaflet-tooltip-bottom:before{top:0;margin-top:-12px;margin-left:-6px;border-bottom-color:#fff}.leaflet-tooltip-left{margin-left:-6px}.leaflet-tooltip-right{margin-left:6px}.leaflet-tooltip-left:before,.leaflet-tooltip-right:before{top:50%;margin-top:-6px}.leaflet-tooltip-left:before{right:0;margin-right:-12px;border-left-color:#fff}.leaflet-tooltip-right:before{left:0;margin-left:-12px;border-right-color:#fff}@media print{.leaflet-control{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
+/* ============================================================
+   Supply Cliff Radar — Corner Health GTM / payer intelligence
+   Layout: fixed app shell — header, left control rail, map,
+   slide-in provider card. Tile-free data map (CSP blocks tiles).
+   ============================================================ */
+:root{
+  /* cool, clinical neutrals with a teal bias */
+  --bg:#eef2f4; --surface:#ffffff; --panel:#f7f9fb; --rail:#ffffff;
+  --fg:#0e1b23; --muted:#5a6b76; --faint:#8697a1; --line:#dde5ea;
+  --map-bg:#e4eaed; --county:#f0f3f5; --county-line:#c6d2d9; --context-line:#cdd8de;
+  /* brand accent (Corner Health teal-green) */
+  --accent:#0d9c89; --accent-ink:#0a7a6c; --accent-wash:rgba(13,156,137,.10);
+  /* semantic (independent of accent) */
+  --crit:#e24a3b; --crit-wash:rgba(226,74,59,.12);
+  --warn:#e2902f; --warn-wash:rgba(226,144,47,.14);
+  --ok:#3c9a68; --ok-wash:rgba(60,154,104,.12);
+  --unknown:#93a4ae;
+  --shadow:0 6px 24px rgba(16,36,48,.14), 0 1px 2px rgba(16,36,48,.10);
+  --font:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --display:"Space Grotesk",var(--font);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b1216; --surface:#121d24; --panel:#0f191f; --rail:#101a20;
+  --fg:#e7eef2; --muted:#93a6b1; --faint:#6a7e8a;
+  --line:#22313a; --map-bg:#0a1115; --county:#13212a; --county-line:#223742;
+  --context-line:#1c2c35;
+  --accent:#1cc0ab; --accent-ink:#36d2bd; --accent-wash:rgba(28,192,171,.14);
+  --crit:#f0695a; --crit-wash:rgba(240,105,90,.16);
+  --warn:#eda64a; --warn-wash:rgba(237,166,74,.16);
+  --ok:#52b681; --ok-wash:rgba(82,182,129,.16);
+  --unknown:#5f7580;
+  --shadow:0 8px 30px rgba(0,0,0,.45), 0 1px 2px rgba(0,0,0,.4);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0b1216; --surface:#121d24; --panel:#0f191f; --rail:#101a20;
+  --fg:#e7eef2; --muted:#93a6b1; --faint:#6a7e8a;
+  --line:#22313a; --map-bg:#0a1115; --county:#13212a; --county-line:#223742;
+  --context-line:#1c2c35;
+  --accent:#1cc0ab; --accent-ink:#36d2bd; --accent-wash:rgba(28,192,171,.14);
+  --crit:#f0695a; --crit-wash:rgba(240,105,90,.16);
+  --warn:#eda64a; --warn-wash:rgba(237,166,74,.16);
+  --ok:#52b681; --ok-wash:rgba(82,182,129,.16);
+  --unknown:#5f7580;
+  --shadow:0 8px 30px rgba(0,0,0,.45), 0 1px 2px rgba(0,0,0,.4);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);
+  font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+#app{height:100%;display:flex;flex-direction:column;overflow:hidden}
+h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;text-wrap:balance}
+button{font-family:inherit}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* ---------- header ---------- */
+header{display:flex;align-items:center;gap:14px;padding:10px 16px;
+  background:var(--surface);border-bottom:1px solid var(--line);z-index:600;flex:none}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:30px;height:30px;border-radius:8px;flex:none;
+  background:linear-gradient(135deg,var(--accent),var(--accent-ink));
+  display:grid;place-items:center;color:#fff;font-family:var(--display);font-weight:700;font-size:15px}
+.brand .t{min-width:0}
+.brand h1{font-size:16px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand p{margin:0;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hspacer{flex:1}
+.scope{display:flex;gap:6px}
+.scope .chip{font-size:11px;font-weight:600;color:var(--accent-ink);
+  background:var(--accent-wash);border:1px solid var(--accent);border-radius:999px;padding:3px 9px}
+.iconbtn{display:none;border:1px solid var(--line);background:var(--panel);color:var(--fg);
+  border-radius:9px;padding:7px 10px;font-size:12.5px;font-weight:600;cursor:pointer}
+
+/* ---------- body split ---------- */
+.body{flex:1;display:grid;grid-template-columns:336px 1fr;min-height:0}
+.rail{background:var(--rail);border-right:1px solid var(--line);overflow-y:auto;
+  padding:14px 14px 28px;display:flex;flex-direction:column;gap:16px}
+.mapwrap{position:relative;min-width:0;min-height:0}
+#map{position:absolute;inset:0}
+.leaflet-container{background:var(--map-bg);font-family:var(--font)}
+.leaflet-interactive:focus{outline:none}
+
+/* ---------- rail sections ---------- */
+.block{display:flex;flex-direction:column;gap:9px}
+.block>.hd{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.block .hd h2{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+.block .hd .mini{font-size:11px;color:var(--faint)}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:10px 11px}
+.stat .n{font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:-.02em;line-height:1}
+.stat .l{font-size:11px;color:var(--muted);margin-top:4px}
+.stat.wide{grid-column:1/-1;display:flex;align-items:center;gap:10px}
+.stat.crit .n{color:var(--crit)} .stat.warn .n{color:var(--warn)} .stat.accent .n{color:var(--accent-ink)}
+.stat.wide .barwrap{flex:1;height:8px;border-radius:5px;background:var(--line);overflow:hidden;display:flex}
+.stat.wide .barwrap i{display:block;height:100%}
+
+.ctl{display:flex;flex-direction:column;gap:7px}
+.toggle,.radio{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:9px;
+  border:1px solid var(--line);background:var(--panel);cursor:pointer;font-size:12.5px;user-select:none}
+.toggle:hover,.radio:hover,.seg button:hover{border-color:var(--accent)}
+.toggle input,.radio input{accent-color:var(--accent);width:15px;height:15px;margin:0;flex:none}
+.toggle .sw{margin-left:auto;font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
+.toggle .dot{width:11px;height:11px;border-radius:50%;flex:none}
+.seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{flex:1;border:0;background:var(--panel);color:var(--muted);padding:7px 4px;
+  font-size:12px;font-weight:600;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:11px;color:var(--muted);font-weight:600}
+select{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--line);
+  background:var(--panel);color:var(--fg);font-family:inherit;font-size:12.5px;cursor:pointer}
+
+/* legend */
+.legend{display:flex;flex-direction:column;gap:8px;font-size:11.5px;color:var(--muted)}
+.legend .row{display:flex;align-items:center;gap:8px}
+.legend .key{width:16px;height:16px;border-radius:50%;flex:none;border:2px solid var(--line)}
+.legend .hx{width:16px;height:12px;border-radius:3px;flex:none;opacity:.78}
+.legend .seg-note{font-size:11px;color:var(--faint);line-height:1.4}
+.swatches{display:flex;gap:3px;margin-top:2px}
+.swatches i{height:10px;flex:1;border-radius:2px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;width:100%;
+  padding:10px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;
+  font-weight:600;font-size:13px;cursor:pointer}
+.btn.ghost{background:var(--panel);color:var(--fg);border-color:var(--line)}
+.btn:active{transform:translateY(1px)}
+.src{font-size:10.5px;color:var(--faint);line-height:1.5}
+.src b{color:var(--muted);font-weight:600}
+.src a{color:var(--accent-ink)}
+
+/* ---------- map overlays ---------- */
+.mapctl{position:absolute;z-index:500;display:flex;gap:6px}
+.mapctl.tl{top:12px;left:12px;flex-direction:column;align-items:flex-start}
+.mapctl.tr{top:12px;right:12px;flex-direction:column;align-items:flex-end}
+.zoombtns{display:flex;gap:6px;background:var(--surface);border:1px solid var(--line);
+  border-radius:10px;padding:4px;box-shadow:var(--shadow)}
+.zoombtns button{border:0;background:transparent;color:var(--fg);font-weight:600;font-size:12px;
+  padding:6px 10px;border-radius:7px;cursor:pointer}
+.zoombtns button:hover{background:var(--panel)}
+.countpill{background:var(--surface);border:1px solid var(--line);border-radius:999px;
+  padding:6px 12px;font-size:12px;box-shadow:var(--shadow);font-weight:600}
+.countpill b{color:var(--accent-ink)}
+.themebtn{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);
+  color:var(--fg);cursor:pointer;box-shadow:var(--shadow);font-size:15px}
+
+/* ---------- provider detail card ---------- */
+#detail{position:absolute;top:0;right:0;bottom:0;width:372px;max-width:88vw;z-index:700;
+  background:var(--surface);border-left:1px solid var(--line);box-shadow:var(--shadow);
+  transform:translateX(102%);transition:transform .22s ease;display:flex;flex-direction:column}
+#detail.open{transform:none}
+.dhd{padding:16px 16px 12px;border-bottom:1px solid var(--line);position:relative}
+.dhd .tier{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;
+  padding:3px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em}
+.dhd h2{font-size:19px;margin:9px 0 2px;letter-spacing:-.01em}
+.dhd .sub{font-size:12.5px;color:var(--muted)}
+.closex{position:absolute;top:12px;right:12px;width:30px;height:30px;border-radius:8px;border:1px solid var(--line);
+  background:var(--panel);color:var(--fg);font-size:16px;cursor:pointer;line-height:1}
+.dbody{padding:14px 16px 22px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.kv{display:grid;grid-template-columns:118px 1fr;gap:3px 10px;font-size:12.5px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;color:var(--fg);font-weight:500}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;
+  padding:3px 9px;border-radius:999px}
+.pill.crit{background:var(--crit-wash);color:var(--crit)}
+.pill.ok{background:var(--ok-wash);color:var(--ok)}
+.pill.warn{background:var(--warn-wash);color:var(--warn)}
+.pill.flat{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
+.card{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel)}
+.card h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px}
+.trend{display:flex;align-items:flex-end;gap:14px}
+.trend .bars{display:flex;align-items:flex-end;gap:10px;height:62px}
+.trend .bar{display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:flex-end;height:100%}
+.trend .bar .col{width:30px;border-radius:5px 5px 0 0;min-height:3px}
+.trend .bar .yr{font-size:10.5px;color:var(--faint)}
+.trend .bar .v{font-size:12px;font-weight:700}
+.trend .delta{display:flex;flex-direction:column;gap:3px}
+.trend .delta .big{font-family:var(--display);font-size:24px;font-weight:600}
+.trend .delta .lb{font-size:10.5px;color:var(--muted)}
+.supply{display:flex;gap:10px}
+.supply .s{flex:1;text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 4px}
+.supply .s .n{font-family:var(--display);font-size:19px;font-weight:600}
+.supply .s .l{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.3}
+.note{font-size:11px;color:var(--faint);line-height:1.5}
+.copyaddr{display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--accent-ink);
+  font-size:11px;font-weight:600;border:1px solid var(--line);background:var(--panel);border-radius:7px;padding:3px 7px}
+
+/* loading + toast */
+#loading{position:absolute;inset:0;display:grid;place-items:center;z-index:800;background:var(--map-bg)}
+#loading .box{display:flex;flex-direction:column;align-items:center;gap:12px;color:var(--muted);font-size:13px}
+.spin{width:30px;height:30px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);
+  animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}#detail{transition:none}}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);z-index:900;
+  background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:12.5px;font-weight:600;
+  opacity:0;pointer-events:none;transition:all .2s ease;box-shadow:var(--shadow)}
+#toast.show{opacity:1;transform:translateX(-50%)}
+
+/* copy modal fallback */
+#copybox{position:fixed;inset:0;z-index:950;background:rgba(5,15,20,.55);display:none;place-items:center;padding:20px}
+#copybox.show{display:grid}
+#copybox .inner{background:var(--surface);border:1px solid var(--line);border-radius:14px;max-width:560px;width:100%;
+  padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)}
+#copybox textarea{width:100%;height:230px;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+  border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--panel);color:var(--fg);resize:vertical}
+
+/* ---------- responsive ---------- */
+@media (max-width:820px){
+  .body{grid-template-columns:1fr}
+  .iconbtn{display:inline-block}
+  .brand p{display:none}
+  .rail{position:absolute;top:0;bottom:0;left:0;width:310px;max-width:86vw;z-index:650;
+    transform:translateX(-102%);transition:transform .22s ease;box-shadow:var(--shadow)}
+  .rail.open{transform:none}
+  #detail{width:100%;max-width:100%;top:auto;height:74%;border-left:0;border-top:1px solid var(--line);
+    border-radius:16px 16px 0 0;transform:translateY(102%)}
+  #detail.open{transform:none}
+}
+</style>
+
+<div id="app">
+  <header>
+    <button class="iconbtn" id="railToggle" aria-label="Filters">☰ Filters</button>
+    <div class="brand">
+      <div class="logo">C</div>
+      <div class="t">
+        <h1>Supply Cliff Radar</h1>
+        <p>Retiring solo-PCP intelligence · Corner Health GTM &amp; payer desk</p>
+      </div>
+    </div>
+    <div class="hspacer"></div>
+    <div class="scope" id="scopeChips"></div>
+    <button class="iconbtn" id="detailToggle" style="display:none">Provider ›</button>
+  </header>
+
+  <div class="body">
+    <aside class="rail" id="rail">
+      <!-- stats -->
+      <div class="block" id="statsBlock">
+        <div class="hd"><h2>Supply cliff · AZ + WA</h2></div>
+        <div class="stats" id="stats"></div>
+      </div>
+
+      <!-- layers -->
+      <div class="block">
+        <div class="hd"><h2>Map layers</h2></div>
+        <div class="ctl" id="layers">
+          <label class="toggle"><input type="checkbox" id="L_pins" checked>
+            <span>Vulnerable solo PCPs</span><span class="sw" id="n_pins"></span></label>
+          <label class="toggle"><input type="checkbox" id="L_hex" checked>
+            <span>PCP supply density</span><span class="sw">hex</span></label>
+          <label class="toggle"><input type="checkbox" id="L_active">
+            <span>All active PCPs</span><span class="sw" id="n_active">9,770</span></label>
+          <label class="toggle"><input type="checkbox" id="L_county" checked>
+            <span>County outlines</span><span class="sw">54</span></label>
+        </div>
+      </div>
+
+      <!-- filters -->
+      <div class="block">
+        <div class="hd"><h2>Filter pins</h2><span class="mini" id="filtCount"></span></div>
+        <div class="ctl">
+          <div class="field"><label>State</label>
+            <div class="seg" id="segState">
+              <button data-v="all" aria-pressed="true">All</button>
+              <button data-v="AZ">AZ</button><button data-v="WA">WA</button></div></div>
+          <div class="field"><label>Priority tier</label>
+            <div class="seg" id="segTier">
+              <button data-v="all" aria-pressed="true">All</button>
+              <button data-v="A">A</button><button data-v="B">B</button><button data-v="C">C</button></div></div>
+          <div class="field"><label>Primary specialty</label>
+            <select id="selSpec">
+              <option value="all">All primary care</option>
+              <option value="FAMILY PRACTICE">Family practice</option>
+              <option value="INTERNAL MEDICINE">Internal medicine</option>
+              <option value="GENERAL PRACTICE">General practice</option></select></div>
+          <label class="toggle"><input type="checkbox" id="fWind">
+            <span>Only actively winding down</span><span class="dot" style="background:var(--crit)"></span></label>
+          <label class="toggle"><input type="checkbox" id="fThin">
+            <span>Only thin local supply</span><span class="dot" style="background:var(--warn)"></span></label>
+        </div>
+      </div>
+
+      <!-- legend -->
+      <div class="block">
+        <div class="hd"><h2>Legend</h2></div>
+        <div class="legend">
+          <div class="seg-note"><b style="color:var(--fg)">Pin fill</b> = 2-yr Medicare trend</div>
+          <div class="row"><span class="key" style="background:var(--crit);border-color:var(--crit)"></span>Winding down (≥20% fewer patients, or stopped)</div>
+          <div class="row"><span class="key" style="background:var(--ok);border-color:var(--ok)"></span>Stable or growing</div>
+          <div class="row"><span class="key" style="background:var(--unknown);border-color:var(--unknown)"></span>No / suppressed Medicare data</div>
+          <div class="seg-note"><b style="color:var(--fg)">Amber ring</b> = thin local PCP supply · <b style="color:var(--fg)">size</b> = Medicare panel</div>
+          <div class="seg-note" style="margin-top:4px"><b style="color:var(--fg)">Hex shade</b> = active PCPs nearby (supply density)</div>
+          <div class="swatches" id="hexSwatches"></div>
+        </div>
+      </div>
+
+      <!-- export -->
+      <div class="block">
+        <button class="btn" id="exportBtn">⧉ Copy filtered list as CSV</button>
+        <div class="src" style="margin-top:4px">Pastes straight into Sheets/Excel for outreach.</div>
+      </div>
+
+      <div class="src">
+        <b>Sources.</b> CMS Doctors &amp; Clinicians National Downloadable File (Care Compare, Oct 2026) ·
+        CMS Medicare Physician &amp; Other Practitioners — by Provider (2022 &amp; 2024) ·
+        U.S. Census ACS 5-yr (2022) &amp; Gazetteer · Census batch geocoder.
+        <br><b>Logic.</b> Solo = sole-proprietor or group ≤ 2. Vulnerable = grad yr ≤ 1986 (age ≈ 66+).
+        Wind-down = ≥ 20% drop in unique Medicare beneficiaries 2022→2024.
+        Thin supply = &lt; 20 active PCPs within 4 mi. MVP; verify before outreach.
+      </div>
+    </aside>
+
+    <main class="mapwrap">
+      <div id="map"></div>
+      <div class="mapctl tl">
+        <div class="zoombtns">
+          <button data-z="all">Both</button><button data-z="AZ">Arizona</button><button data-z="WA">Washington</button>
+        </div>
+      </div>
+      <div class="mapctl tr">
+        <button class="themebtn" id="themeBtn" title="Toggle theme">◐</button>
+        <div class="countpill"><b id="visCount">0</b> pins shown</div>
+      </div>
+      <div id="loading"><div class="box"><div class="spin"></div><div>Loading CMS &amp; Census layers…</div></div></div>
+    </main>
+  </div>
+
+  <section id="detail" aria-live="polite"></section>
+</div>
+
+<div id="toast"></div>
+<div id="copybox"><div class="inner">
+  <div style="font-weight:600">Copy this CSV</div>
+  <textarea id="copyta" readonly></textarea>
+  <button class="btn ghost" id="copyClose">Close</button>
+</div></div>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+"use strict";
+const DATA='data/';
+const fmt=n=>n==null?'—':Number(n).toLocaleString('en-US');
+const $=s=>document.querySelector(s);
+const toast=(m)=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);};
+
+/* ---- color helpers ---- */
+function trendColor(s){
+  if(s==='active_winddown'||s==='dropout_no_medicare')return getVar('--crit');
+  if(s==='stable_or_growing')return getVar('--ok');
+  return getVar('--unknown');
+}
+const HEX_STOPS=[ // active PCP count -> color (supply density)
+  {max:0,  c:'#d98a3d'}, {max:2, c:'#e6c488'}, {max:5, c:'#bcd0c6'},
+  {max:10, c:'#7fc0b2'}, {max:25,c:'#3ea796'}, {max:1e9,c:'#126b60'}
+];
+function hexColor(n){for(const s of HEX_STOPS){if(n<=s.max)return s.c;}return '#126b60';}
+function getVar(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function pinRadius(benes){ if(benes==null)return 4.5; return Math.max(4.5,Math.min(15,Math.sqrt(benes)/2.1)); }
+
+/* ---- map ---- */
+const map=L.map('map',{preferCanvas:true,zoomControl:false,attributionControl:false,
+  minZoom:4,maxZoom:14,zoomSnap:.25}).setView([40,-116],5);
+L.control.zoom({position:'bottomright'}).addTo(map);
+const paneCtx=map.createPane('ctx');paneCtx.style.zIndex=350;
+const paneHex=map.createPane('hex');paneHex.style.zIndex=360;
+const paneCty=map.createPane('cty');paneCty.style.zIndex=370;
+const paneActive=map.createPane('act');paneActive.style.zIndex=390;
+const panePins=map.createPane('pins');panePins.style.zIndex=450;
+
+let PINS=[], hexLayer, ctyLayer, ctxLayer, activeLayer=null, pinLayer;
+const bounds={all:null,AZ:null,WA:null};
+
+async function j(f){const r=await fetch(DATA+f);if(!r.ok)throw new Error(f);return r.json();}
+
+async function boot(){
+  const [summary,ctx,cty,hex,pins]=await Promise.all([
+    j('summary.json'),j('context_states.geojson'),j('boundaries.geojson'),
+    j('saturation_hex.geojson'),j('vulnerable_pins.geojson')
+  ]);
+  buildStats(summary);buildScope(summary);buildHexSwatches();
+
+  ctxLayer=L.geoJSON(ctx,{pane:'ctx',interactive:false,style:{color:getVar('--context-line'),
+    weight:1,fill:false,dashArray:'3,4'}}).addTo(map);
+  ctyLayer=L.geoJSON(cty,{pane:'cty',interactive:false,style:{color:getVar('--county-line'),
+    weight:.8,fillColor:getVar('--county'),fillOpacity:.55}}).addTo(map);
+  hexLayer=L.geoJSON(hex,{pane:'hex',interactive:false,style:f=>({stroke:false,
+    fillColor:hexColor(f.properties.pcp_count),fillOpacity:.5})}).addTo(map);
+
+  PINS=pins.features;
+  pinLayer=L.layerGroup([],{pane:'pins'}).addTo(map);
+  computeBounds();
+  render();
+  $('#loading').style.display='none';
+  map.fitBounds(bounds.all,{padding:[30,30]});
+  wire();
+}
+
+function computeBounds(){
+  const az=[],wa=[],all=[];
+  PINS.forEach(f=>{const c=[f.geometry.coordinates[1],f.geometry.coordinates[0]];
+    all.push(c);(f.properties.state==='AZ'?az:wa).push(c);});
+  bounds.all=L.latLngBounds(all);bounds.AZ=L.latLngBounds(az);bounds.WA=L.latLngBounds(wa);
+}
+
+/* ---- filter + render pins ---- */
+const F={state:'all',tier:'all',spec:'all',wind:false,thin:false};
+function pass(p){
+  if(F.state!=='all'&&p.state!==F.state)return false;
+  if(F.tier!=='all'&&p.priority_tier!==F.tier)return false;
+  if(F.spec!=='all'&&p.specialty.toUpperCase()!==F.spec)return false;
+  if(F.wind&&!p.is_winddown)return false;
+  if(F.thin&&!p.thin_local_supply)return false;
+  return true;
+}
+let currentFiltered=[];
+function render(){
+  pinLayer.clearLayers();
+  currentFiltered=[];
+  if(!$('#L_pins').checked){$('#visCount').textContent=0;$('#filtCount').textContent='';return;}
+  PINS.forEach(f=>{
+    const p=f.properties;if(!pass(p))return;
+    currentFiltered.push(f);
+    const latlng=[f.geometry.coordinates[1],f.geometry.coordinates[0]];
+    const m=L.circleMarker(latlng,{pane:'pins',radius:pinRadius(p.benes_base),
+      fillColor:trendColor(p.winddown_status),fillOpacity:.9,
+      color:p.thin_local_supply?getVar('--warn'):'rgba(255,255,255,.75)',
+      weight:p.thin_local_supply?2.4:1.1});
+    m.on('click',()=>openDetail(p,latlng));
+    m.on('mouseover',function(){this.setStyle({weight:3});});
+    m.on('mouseout',function(){this.setStyle({weight:p.thin_local_supply?2.4:1.1});});
+    m.bindTooltip(`${p.name} · ${titlecase(p.city)}`,{direction:'top',offset:[0,-4]});
+    pinLayer.addLayer(m);
+  });
+  $('#visCount').textContent=currentFiltered.length;
+  $('#filtCount').textContent=currentFiltered.length+' of '+PINS.length;
+  $('#n_pins').textContent=PINS.length;
+}
+const titlecase=s=>(s||'').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
+
+/* ---- active PCP lazy layer ---- */
+async function toggleActive(on){
+  if(on){
+    if(!activeLayer){
+      toast('Loading 9,770 active PCPs…');
+      const d=await j('active_pcps.geojson');
+      activeLayer=L.geoJSON(d,{pane:'act',pointToLayer:(f,ll)=>L.circleMarker(ll,{pane:'act',
+        radius:2.3,fillColor:getVar('--accent'),fillOpacity:.32,stroke:false})});
+    }
+    activeLayer.addTo(map);
+  } else if(activeLayer){map.removeLayer(activeLayer);}
+}
+
+/* ---- detail card ---- */
+function openDetail(p,latlng){
+  const tierMap={A:['crit','Tier A · Imminent desert'],B:['warn','Tier B · Active watch'],C:['flat','Tier C · Monitor']};
+  const [tc,tl]=tierMap[p.priority_tier]||['flat','—'];
+  const statusPill=p.is_winddown
+    ?`<span class="pill crit">● Actively winding down</span>`
+    :(p.winddown_status==='stable_or_growing'?`<span class="pill ok">● Stable / growing</span>`
+      :`<span class="pill flat">○ No Medicare signal</span>`);
+  const d=$('#detail');
+  d.innerHTML=`
+    <div class="dhd">
+      <button class="closex" onclick="closeDetail()" aria-label="Close">×</button>
+      <span class="tier pill ${tc}">${tl}</span>
+      <h2>${p.name||'Unknown provider'}</h2>
+      <div class="sub">${p.credential||''} · ${titlecase(p.specialty)} · NPI ${p.npi}</div>
+    </div>
+    <div class="dbody">
+      <div>${statusPill}</div>
+      <dl class="kv">
+        <dt>Est. age</dt><dd>${p.est_age!=null?p.est_age+' (grad '+p.grad_year+')':'—'}</dd>
+        <dt>Practice</dt><dd>${titlecase((p.practice_type||'').replace(/_/g,' '))}</dd>
+        <dt>Facility</dt><dd>${p.facility||'—'}</dd>
+        <dt>Address</dt><dd>${titlecase(p.address)} <button class="copyaddr" onclick="copyText(this.dataset.a,'Address copied')" data-a="${(p.address||'').replace(/"/g,'&quot;')}">copy</button></dd>
+        <dt>Phone</dt><dd>${p.phone||'—'}</dd>
+      </dl>
+
+      <div class="card">
+        <h3>2-year Medicare volume (Layer 2)</h3>
+        ${trendBlock(p)}
+      </div>
+
+      <div class="card">
+        <h3>Local supply · 4-mile catchment (Layer 3)</h3>
+        <div class="supply">
+          <div class="s"><div class="n tnum">${fmt(p.nearby_active_pcps)}</div><div class="l">Active PCPs within 4 mi</div></div>
+          <div class="s"><div class="n tnum">${p.pcps_per_10k!=null?p.pcps_per_10k:'—'}</div><div class="l">PCPs / 10k residents</div></div>
+          <div class="s"><div class="n tnum">${p.catchment_population?fmt(p.catchment_population):'—'}</div><div class="l">Catchment population</div></div>
+        </div>
+        <div class="note" style="margin-top:9px">${p.thin_local_supply?'⚠ Thin local buffer — few nearby PCPs to absorb an orphaned panel.':'Ample nearby PCP supply.'} ${p.geo_source==='zcta_centroid'?'Location approximated to ZIP centroid.':''}</div>
+      </div>
+      <div class="note">Per-capita ratios use ACS ZCTA centroids and are approximate in sparse rural areas; the nearby-PCP count is exact.</div>
+    </div>`;
+  d.classList.add('open');
+  if(latlng)map.panTo(latlng,{animate:true});
+}
+function trendBlock(p){
+  const b=p.benes_base,l=p.benes_latest;
+  if(b==null&&l==null) return `<div class="note">No Medicare Part B volume on file for 2022 or 2024 — likely a commercial-heavy panel or CMS-suppressed (&lt;11 beneficiaries). Treat as unknown trend.</div>`;
+  const mx=Math.max(b||0,l||0,1);
+  const h=v=>v==null?3:Math.max(3,Math.round((v/mx)*58));
+  const pc=p.benes_pct_change;
+  const dc=pc==null?getVar('--muted'):(pc<=-20?getVar('--crit'):(pc<0?getVar('--warn'):getVar('--ok')));
+  const sign=pc==null?'':(pc>0?'+':'');
+  return `<div class="trend">
+    <div class="bars">
+      <div class="bar"><div class="v">${fmt(b)}</div><div class="col" style="height:${h(b)}px;background:var(--faint)"></div><div class="yr">2022</div></div>
+      <div class="bar"><div class="v">${fmt(l)}</div><div class="col" style="height:${h(l)}px;background:${dc}"></div><div class="yr">2024</div></div>
+    </div>
+    <div class="delta">
+      <div class="big" style="color:${dc}">${pc==null?'n/a':sign+pc+'%'}</div>
+      <div class="lb">unique Medicare<br>beneficiaries</div>
+    </div></div>
+    ${p.winddown_status==='dropout_no_medicare'?'<div class="note" style="margin-top:8px;color:var(--crit)">Billed Medicare in 2022, none in 2024 — stopped or nearly stopped.</div>':''}`;
+}
+function closeDetail(){$('#detail').classList.remove('open');}
+window.closeDetail=closeDetail;
+
+/* ---- CSV export (clipboard; artifacts block downloads) ---- */
+const COLS=[['priority_tier','tier'],['npi','npi'],['name','name'],['credential','cred'],
+  ['specialty','specialty'],['grad_year','grad_yr'],['est_age','est_age'],['practice_type','practice'],
+  ['address','address'],['city','city'],['state','state'],['zip','zip'],['phone','phone'],
+  ['benes_base','benes_2022'],['benes_latest','benes_2024'],['benes_pct_change','benes_pct_chg'],
+  ['winddown_status','status'],['nearby_active_pcps','pcps_within_4mi'],['pcps_per_10k','pcps_per_10k']];
+function toCSV(){
+  const esc=v=>{v=v==null?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const head=COLS.map(c=>c[1]).join(',');
+  const rows=currentFiltered.map(f=>COLS.map(c=>esc(f.properties[c[0]])).join(','));
+  return [head,...rows].join('\n');
+}
+async function copyText(t,msg){
+  try{await navigator.clipboard.writeText(t);toast(msg||'Copied');}
+  catch(e){const cb=$('#copybox');$('#copyta').value=t;cb.classList.add('show');$('#copyta').select();}
+}
+window.copyText=copyText;
+
+/* ---- stats + scope ---- */
+function buildStats(s){
+  const el=$('#stats');
+  el.innerHTML=`
+    <div class="stat accent"><div class="n tnum">${s.vulnerable_total}</div><div class="l">Vulnerable solo PCPs</div></div>
+    <div class="stat crit"><div class="n tnum">${s.active_winddown}</div><div class="l">Actively winding down</div></div>
+    <div class="stat warn"><div class="n tnum">${s.tier_a}</div><div class="l">Tier A — act now</div></div>
+    <div class="stat"><div class="n tnum">${s.thin_local_supply}</div><div class="l">In thin-supply zones</div></div>
+    <div class="stat wide">
+      <div><div class="l" style="margin:0 0 5px">Tier mix (A / B / C)</div>
+      <div class="barwrap">
+        <i style="background:var(--crit);width:${s.tier_a/s.vulnerable_total*100}%"></i>
+        <i style="background:var(--warn);width:${s.tier_b/s.vulnerable_total*100}%"></i>
+        <i style="background:var(--unknown);width:${s.tier_c/s.vulnerable_total*100}%"></i>
+      </div></div>
+      <div class="tnum" style="font-weight:600;font-size:12px">${s.tier_a}/${s.tier_b}/${s.tier_c}</div>
+    </div>`;
+}
+function buildScope(s){$('#scopeChips').innerHTML=s.scope_states.map(x=>`<span class="chip">${x}</span>`).join('');}
+function buildHexSwatches(){
+  $('#hexSwatches').innerHTML=HEX_STOPS.map(x=>`<i style="background:${x.c}"></i>`).join('');
+}
+
+/* ---- wiring ---- */
+function wire(){
+  $('#L_pins').onchange=render;
+  $('#L_hex').onchange=e=>{e.target.checked?hexLayer.addTo(map):map.removeLayer(hexLayer);};
+  $('#L_county').onchange=e=>{e.target.checked?ctyLayer.addTo(map):map.removeLayer(ctyLayer);};
+  $('#L_active').onchange=e=>toggleActive(e.target.checked);
+  seg('#segState','state');seg('#segTier','tier');
+  $('#selSpec').onchange=e=>{F.spec=e.target.value;render();};
+  $('#fWind').onchange=e=>{F.wind=e.target.checked;render();};
+  $('#fThin').onchange=e=>{F.thin=e.target.checked;render();};
+  document.querySelectorAll('.zoombtns button').forEach(b=>b.onclick=()=>{
+    const z=b.dataset.z;map.flyToBounds(bounds[z]||bounds.all,{padding:[30,30],duration:.5});});
+  $('#exportBtn').onclick=()=>{ if(!currentFiltered.length){toast('No pins match the filters');return;}
+    copyText(toCSV(),currentFiltered.length+' providers copied as CSV'); };
+  $('#railToggle').onclick=()=>$('#rail').classList.toggle('open');
+  $('#copyClose').onclick=()=>$('#copybox').classList.remove('show');
+  $('#themeBtn').onclick=toggleTheme;
+  map.on('click',()=>{ if(window.matchMedia('(max-width:820px)').matches)$('#rail').classList.remove('open'); });
+}
+function seg(sel,key){document.querySelectorAll(sel+' button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(sel+' button').forEach(x=>x.setAttribute('aria-pressed','false'));
+  b.setAttribute('aria-pressed','true');F[key]=b.dataset.v;render();});}
+
+function toggleTheme(){
+  const r=document.documentElement;
+  const cur=r.getAttribute('data-theme')|| (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  const next=cur==='dark'?'light':'dark';
+  r.setAttribute('data-theme',next);
+  // recolor theme-dependent vector layers
+  if(ctxLayer)ctxLayer.setStyle({color:getVar('--context-line')});
+  if(ctyLayer)ctyLayer.setStyle({color:getVar('--county-line'),fillColor:getVar('--county')});
+  render();
+}
+
+// Debug helper for automated render checks (harmless in production).
+window.__dbg={open:(i=0)=>{const f=currentFiltered[i];if(f)openDetail(f.properties,[f.geometry.coordinates[1],f.geometry.coordinates[0]]);}};
+
+boot().catch(e=>{$('#loading').innerHTML='<div class="box">Failed to load data: '+e.message+'</div>';console.error(e);});
+</script>
