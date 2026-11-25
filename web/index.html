@@ -16,6 +16,7 @@
   --accent:#0d9c89; --accent-ink:#0a7a6c; --accent-wash:rgba(13,156,137,.10);
   --crit:#e24a3b; --crit-wash:rgba(226,74,59,.12);
   --warn:#e2902f; --warn-wash:rgba(226,144,47,.14);
+  --cau:#d9b528; --cau-wash:rgba(217,181,40,.16);
   --ok:#3c9a68; --ok-wash:rgba(60,154,104,.12);
   --unknown:#93a4ae;
   --shadow:0 6px 24px rgba(16,36,48,.14),0 1px 2px rgba(16,36,48,.10);
@@ -28,7 +29,7 @@
   --line:#22313a; --map-bg:#0a1115; --county:#111c23; --county-line:#223742;
   --accent:#1cc0ab; --accent-ink:#36d2bd; --accent-wash:rgba(28,192,171,.14);
   --crit:#f0695a; --crit-wash:rgba(240,105,90,.16);
-  --warn:#eda64a; --warn-wash:rgba(237,166,74,.16);
+  --warn:#eda64a; --warn-wash:rgba(237,166,74,.16); --cau:#e8ca4a; --cau-wash:rgba(232,202,74,.18);
   --ok:#52b681; --ok-wash:rgba(82,182,129,.16);
   --unknown:#5f7580;
   --shadow:0 8px 30px rgba(0,0,0,.45),0 1px 2px rgba(0,0,0,.4);
@@ -40,7 +41,7 @@
   --line:#22313a; --map-bg:#0a1115; --county:#111c23; --county-line:#223742;
   --accent:#1cc0ab; --accent-ink:#36d2bd; --accent-wash:rgba(28,192,171,.14);
   --crit:#f0695a; --crit-wash:rgba(240,105,90,.16);
-  --warn:#eda64a; --warn-wash:rgba(237,166,74,.16);
+  --warn:#eda64a; --warn-wash:rgba(237,166,74,.16); --cau:#e8ca4a; --cau-wash:rgba(232,202,74,.18);
   --ok:#52b681; --ok-wash:rgba(82,182,129,.16);
   --unknown:#5f7580;
   --shadow:0 8px 30px rgba(0,0,0,.45),0 1px 2px rgba(0,0,0,.4);
@@ -220,7 +221,8 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
 .kv dt{color:var(--muted)} .kv dd{margin:0;font-weight:500}
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px}
 .pill.crit{background:var(--crit-wash);color:var(--crit)} .pill.ok{background:var(--ok-wash);color:var(--ok)}
-.pill.warn{background:var(--warn-wash);color:var(--warn)} .pill.flat{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
+.pill.warn{background:var(--warn-wash);color:var(--warn)} .pill.cau{background:var(--cau-wash);color:var(--cau)}
+.pill.flat{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
 .card{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel)}
 .card h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px;
   display:flex;justify-content:space-between;align-items:baseline;gap:6px;flex-wrap:wrap}
@@ -273,8 +275,8 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
 <div id="app">
   <header>
     <button class="iconbtn" id="railToggle">☰</button>
-    <div class="brand"><div class="logo">C</div>
-      <div><h1>Open Territory</h1><p>Where retiring solo doctors leave patients for a new NP clinic</p></div></div>
+    <div class="brand"><div class="logo" id="logo" title="Corner Health">C</div>
+      <div><h1>Open Territory</h1><p id="catLine">Where retiring solo doctors leave patients for a new NP clinic</p></div></div>
     <div class="hspacer"></div>
     <div class="statepick">
       <label for="stateSelect">State</label>
@@ -310,9 +312,10 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
         <div class="countpill"><b id="visCount">0</b> pins · <span id="asof"></span></div>
       </div>
       <div class="legendbox">
-        <div><b>Dots</b> = solo doctors · size = panel</div>
-        <div class="row"><span class="key" style="background:var(--crit);border-color:var(--crit)"></span>Losing patients (winding down)</div>
-        <div class="row"><span class="key" style="background:var(--ok);border-color:var(--ok)"></span>Still stable</div>
+        <div><b>Dots</b> = solo doctors · size = panel · color = Medicare patient loss</div>
+        <div class="row"><span class="key" style="background:var(--crit);border-color:var(--crit)"></span>Steep drop / stopped (≥40% or none)</div>
+        <div class="row"><span class="key" style="background:var(--warn);border-color:var(--warn)"></span>Declining (20–40% fewer)</div>
+        <div class="row"><span class="key" style="background:var(--cau);border-color:var(--cau)"></span>Slight decline / stable (&lt;20%)</div>
         <div class="row" style="margin-top:7px"><b>County shade</b> = primary-care supply</div>
         <div class="swatches" id="supplySwatches"></div>
         <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--faint);margin-top:2px"><span>few doctors</span><span>well-served</span></div>
@@ -345,10 +348,12 @@ let SUMMARY=null, STATE=null, curPins=[], curFiltered=[];
 const SUPPLY_STOPS=[{max:3,c:'#e0954a'},{max:6,c:'#edc793'},{max:9,c:'#cdd6cf'},{max:14,c:'#8fc0b0'},{max:1e9,c:'#4e9e8a'}];
 const supplyColor=v=>{if(v==null)return gv('--county');for(const s of SUPPLY_STOPS)if(v<=s.max)return s.c;return '#4e9e8a';};
 const countyStyle=f=>({color:gv('--county-line'),weight:.6,fillColor:supplyColor(f.properties.supply_per_10k),fillOpacity:.5});
-const trendColor=s=>(s==='active_winddown'||s==='dropout_no_medicare')?gv('--crit'):(s==='stable_or_growing')?gv('--ok'):gv('--unknown');
+// risk spectrum by decline band: red -> orange -> yellow -> green
+const BAND_VAR={stopped:'--crit',steep:'--crit',declining:'--warn',slight:'--cau',stable:'--cau',nodata:'--unknown'};
+const bandColor=b=>gv(BAND_VAR[b]||'--unknown');
 const pinRadius=b=>b==null?4.5:Math.max(4.5,Math.min(15,Math.sqrt(b)/2.1));
 
-const map=L.map('map',{preferCanvas:true,zoomControl:false,attributionControl:false,minZoom:3,maxZoom:14,zoomSnap:.25}).setView([39,-98],4);
+const map=L.map('map',{preferCanvas:false,zoomControl:false,attributionControl:false,minZoom:3,maxZoom:14,zoomSnap:.25}).setView([39,-98],4);
 L.control.zoom({position:'bottomright'}).addTo(map);
 const paneCty=map.createPane('cty');paneCty.style.zIndex=350;
 const paneHex=map.createPane('hex');paneHex.style.zIndex=360;
@@ -403,11 +408,18 @@ async function selectState(st){
   if(STATE.bbox){const[a,b,c,d]=STATE.bbox;map.flyToBounds([[b,a],[d,c]],{padding:[40,40],duration:.5});}
 }
 
+const CATMETA={
+  active:{c:'C',col:'var(--accent)',cls:'active',label:'Corner market',sub:'Corner market — Corner already operates here'},
+  expansion:{c:'P',col:'var(--warn)',cls:'expansion',label:'Planned expansion',sub:'Planned expansion market for Corner'},
+  fpa:{c:'✓',col:'var(--ok)',cls:'fpa',label:'NP can own a clinic',sub:'Full Practice Authority — an NP can own a clinic here'},
+  non_fpa:{c:'×',col:'var(--unknown)',cls:'non',label:'NP ownership restricted',sub:'NP ownership restricted — an NP cannot solely own a clinic here'},
+};
 function renderHeader(st,s){
   $('#stName').textContent=s.name;
-  const bmap={active:['active','Corner market'],expansion:['expansion','Planned'],fpa:['fpa','NP can own a clinic'],non_fpa:['non','NP ownership restricted']};
-  const[cls,lbl]=bmap[s.corner_status];
-  $('#stBadge').innerHTML=`<span class="badge ${cls}">${lbl}</span>`;
+  const m=CATMETA[s.corner_status]||CATMETA.non_fpa;
+  $('#stBadge').innerHTML=`<span class="badge ${m.cls}">${m.label}</span>`;
+  const logo=$('#logo');logo.textContent=m.c;logo.style.background=m.col;logo.title=m.label;
+  $('#catLine').textContent=m.sub;
 }
 
 function buildPayerSelect(){
@@ -494,8 +506,8 @@ function applyFilter(){
   for(const f of curPins){
     const p=f.properties;if(!passes(p))continue;curFiltered.push(f);
     const ll=[f.geometry.coordinates[1],f.geometry.coordinates[0]];
-    const m=L.circleMarker(ll,{pane:'pins',radius:pinRadius(p.benes_base),fillColor:trendColor(p.winddown_status),
-      fillOpacity:.9,color:p.thin_local_supply?gv('--warn'):'rgba(255,255,255,.75)',weight:p.thin_local_supply?2.4:1.1});
+    const m=L.circleMarker(ll,{pane:'pins',radius:pinRadius(p.benes_base),fillColor:bandColor(p.decline_band),
+      fillOpacity:.9,color:'rgba(255,255,255,.8)',weight:1.1});
     m.on('click',()=>openDetail(p,ll));
     m.bindTooltip(`${p.name} · ${p.city}`,{direction:'top',offset:[0,-4]});
     pinLayer.addLayer(m);
@@ -505,16 +517,14 @@ function applyFilter(){
 
 /* detail card */
 function openDetail(p,ll){
-  const bandColor={stopped:'crit',steep:'crit',declining:'warn',slight:'flat',stable:'ok',nodata:'flat'};
-  const tc=bandColor[p.decline_band]||'flat', tl=p.band_label||'—';
+  const bandCls={stopped:'crit',steep:'crit',declining:'warn',slight:'cau',stable:'cau',nodata:'flat'};
+  const tc=bandCls[p.decline_band]||'flat', tl=p.band_label||'—';
   const dy=SUMMARY.data_years||{},by=dy.partb_base||'base',ly=dy.partb_latest||'latest';
-  const sp=p.is_winddown?'<span class="pill crit">● Actively winding down</span>'
-    :(p.winddown_status==='stable_or_growing'?'<span class="pill ok">● Stable / growing</span>':'<span class="pill flat">○ No Medicare signal</span>');
   $('#detail').innerHTML=`<div class="dhd"><button class="closex" onclick="closeDetail()">×</button>
     <span class="tier pill ${tc}">${tl}</span><h2>${p.name||'Unknown'}</h2>
     <div class="sub">${p.credential||''} · ${p.specialty} · NPI ${p.npi}</div>
     <div class="asof2">Provider details: CMS Care Compare, as of ${dy.care_compare||'—'}</div></div>
-   <div class="dbody"><div>${sp}</div>
+   <div class="dbody">
     <dl class="kv">
       <dt>Est. age</dt><dd>${p.est_age!=null?p.est_age+' (grad '+p.grad_year+')':'—'}</dd>
       <dt>Practice</dt><dd>${titlecase((p.practice_type||'').replace(/_/g,' '))}</dd>
@@ -536,7 +546,7 @@ function openDetail(p,ll){
 function marketBlock(p){
   if(p.local_market_trend==null||p.benes_pct_change==null)return '';
   const lm=p.local_market_trend, ps=p.provider_specific;
-  return `<div class="note" style="margin-top:9px">Local PCP market, same county (fee-for-service Medicare): <b style="color:${lm<0?gv('--warn'):gv('--ok')}">${lm>0?'+':''}${lm}%</b>. ${ps?'This practice fell <b>far faster than its market</b> — provider-specific, consistent with the doctor winding down.':'<b>In line with the local market</b> — this drop may be area-wide (e.g. seniors switching to Medicare Advantage); verify before outreach.'}</div>
+  return `<div class="note" style="margin-top:9px">Local PCP market, same county (fee-for-service Medicare): <b style="color:${lm<0?gv('--warn'):gv('--cau')}">${lm>0?'+':''}${lm}%</b>. ${ps?'This practice fell <b>far faster than its market</b> — provider-specific, consistent with the doctor winding down.':'<b>In line with the local market</b> — this drop may be area-wide (e.g. seniors switching to Medicare Advantage); verify before outreach.'}</div>
     <div class="note" style="margin-top:6px">Part B counts fee-for-service Medicare only; a decline can also mean patients moved to Medicare Advantage — the market comparison controls for that.</div>`;
 }
 function trendBlock(p){
@@ -544,7 +554,7 @@ function trendBlock(p){
   if(b==null&&l==null)return '<div class="note">No Medicare volume on file (commercial-heavy or suppressed &lt;11).</div>';
   const mx=Math.max(b||0,l||0,1),h=v=>v==null?3:Math.max(3,Math.round(v/mx*58)),pc=p.benes_pct_change;
   const dy=SUMMARY.data_years||{},by=dy.partb_base||'base',ly=dy.partb_latest||'latest';
-  const dc=pc==null?gv('--muted'):(pc<=-20?gv('--crit'):(pc<0?gv('--warn'):gv('--ok'))),sg=pc==null?'':(pc>0?'+':'');
+  const dc=pc==null?gv('--muted'):(pc<=-20?gv('--crit'):(pc<0?gv('--warn'):gv('--cau'))),sg=pc==null?'':(pc>0?'+':'');
   return `<div class="trend"><div class="bars">
     <div class="bar"><div class="v">${fmt(b)}</div><div class="col" style="height:${h(b)}px;background:var(--faint)"></div><div class="yr">${by}</div></div>
     <div class="bar"><div class="v">${fmt(l)}</div><div class="col" style="height:${h(l)}px;background:${dc}"></div><div class="yr">${ly}</div></div></div>
