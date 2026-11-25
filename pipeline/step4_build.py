@@ -151,6 +151,14 @@ def _round_features(feats, nd=4):
 
 def pin_feature(r):
     name = f"{_title(r['first_name'])} {_title(r['last_name'])}".strip()
+    pct = r["benes_pct_change"]
+    band, band_label = decline_band(r["winddown_status"], pct)
+    prov_pct = round(pct * 100, 1) if pct is not None else None
+    lm = r.get("local_market_trend")
+    # excess decline = how much steeper the provider fell than the local market
+    excess = round(prov_pct - lm, 1) if (prov_pct is not None and lm is not None) else None
+    # provider-specific if the provider fell clearly faster than its county market
+    prov_specific = (excess is not None and excess <= -10) or r["winddown_status"] == "dropout_no_medicare"
     return {"type": "Feature",
             "geometry": {"type": "Point", "coordinates": [r["lon"], r["lat"]]},
             "properties": {
@@ -162,13 +170,15 @@ def pin_feature(r):
                 "city": _title(r["city"]), "state": r["state"], "zip": r["zip5"],
                 "county": r["county_name"], "phone": r["phone"], "geo_source": r["geo_source"],
                 "benes_base": r["benes_base"], "benes_latest": r["benes_latest"],
-                "benes_pct_change": (round(r["benes_pct_change"] * 100, 1)
-                                     if r["benes_pct_change"] is not None else None),
+                "benes_pct_change": prov_pct,
                 "winddown_status": r["winddown_status"], "is_winddown": bool(r["is_winddown"]),
                 "nearby_active_pcps": r["nearby_active_pcps"],
                 "catchment_population": r["catchment_population"],
                 "pcps_per_10k": r["pcps_per_10k"],
                 "thin_local_supply": bool(r["thin_local_supply"]),
+                "decline_band": band, "band_label": band_label,
+                "local_market_trend": lm, "excess_vs_market": excess,
+                "provider_specific": bool(prov_specific),
                 "priority_tier": r["priority_tier"]}}
 
 
@@ -260,6 +270,46 @@ def zip_to_county() -> dict:
 FIPS2 = {v: k for k, v in C.STATE_FIPS.items()}
 
 
+def county_pcp_trend() -> dict:
+    """
+    county FIPS -> % change in FFS Medicare beneficiaries across ALL PCP
+    physicians in the county (base->latest). This is the local-market
+    baseline: fee-for-service volume falls everywhere as seniors shift to
+    Medicare Advantage, so a solo doctor only counts as 'winding down' if
+    their drop is steeper than this county trend.
+    """
+    ap = pl.read_parquet(os.path.join(C.PROC_DIR, "active_pcps.parquet"))
+    xwalk = reference.zcta_county().select("zcta", "county_fips")
+    ap = ap.join(xwalk, left_on="zip5", right_on="zcta", how="left")
+    decay = pl.read_parquet(os.path.join(C.PROC_DIR, "volume_decay.parquet")) \
+        .select("NPI", "benes_base", "benes_latest")
+    g = (ap.join(decay, on="NPI", how="left")
+           .group_by("county_fips")
+           .agg(pl.col("benes_base").sum().alias("b"),
+                pl.col("benes_latest").sum().alias("l"),
+                pl.len().alias("n")))
+    out = {}
+    for r in g.iter_rows(named=True):
+        if r["county_fips"] and r["b"]:
+            out[r["county_fips"]] = round((r["l"] - r["b"]) / r["b"] * 100, 1)
+    return out
+
+
+# Decline bands: plain-language, criteria-visible replacement for A/B/C tiers.
+def decline_band(status, pct_frac):
+    if status == "dropout_no_medicare":
+        return "stopped", "Stopped billing Medicare"
+    if status == "insufficient_medicare_data" or pct_frac is None:
+        return "nodata", "No Medicare data"
+    if pct_frac <= -0.40:
+        return "steep", "Steep decline (≥40% fewer)"
+    if pct_frac <= -0.20:
+        return "declining", "Declining (20–40% fewer)"
+    if pct_frac < 0:
+        return "slight", "Slight decline (<20%)"
+    return "stable", "Stable or growing"
+
+
 def payer_talking_points(payer, st, state_members, exposed, ec) -> list[str]:
     name = C.STATE_NAMES[st]
     top = ", ".join(f"{c['county'].replace(' County','')} ({c['members']:,} members, "
@@ -315,6 +365,10 @@ def build_state_payers(st, cty, cp_all, county_ma_tot) -> list[dict]:
 # --------------------------------------------------------------------------
 def main() -> None:
     pins = saturation(load_pins(), *supply_and_pop())
+    cpt = county_pcp_trend()
+    pins = pins.with_columns(
+        pl.col("county_fips").replace_strict(cpt, default=None, return_dtype=pl.Float64)
+        .alias("local_market_trend"))
     supply_pts, pop_pts = supply_and_pop()
     counties_all = county_rollup(pins, supply_pts, pop_pts)
     active_state = pl.read_parquet(os.path.join(C.PROC_DIR, "active_by_state.parquet"))
@@ -391,6 +445,13 @@ def main() -> None:
             "est_patients_at_risk": est_patients,
             "vulnerable": sp.height,
             "winddown": int(sp["is_winddown"].sum()),
+            "steep_stopped": int(sp.filter(
+                (pl.col("benes_pct_change") <= -0.40)
+                | (pl.col("winddown_status") == "dropout_no_medicare")).height),
+            "provider_specific": int(sp.filter(
+                pl.col("is_winddown") & (
+                    ((pl.col("benes_pct_change") * 100 - pl.col("local_market_trend")) <= -10)
+                    | (pl.col("winddown_status") == "dropout_no_medicare"))).height),
             "tier_a": sp.filter(pl.col("priority_tier") == "A").height,
             "tier_b": sp.filter(pl.col("priority_tier") == "B").height,
             "tier_c": sp.filter(pl.col("priority_tier") == "C").height,
@@ -456,8 +517,6 @@ def main() -> None:
         "national": national,
         "states": states_out,
         "state_list": sorted(present_states, key=lambda s: C.STATE_NAMES[s]),
-        "zip_county": zip_to_county(),
-        "fips_state": C.STATE_FIPS,
         "targets": targets,
         "fpa_states": sorted(C.FPA_STATES),
         "corner_active": sorted(C.CORNER_ACTIVE), "corner_expansion": sorted(C.CORNER_EXPANSION),

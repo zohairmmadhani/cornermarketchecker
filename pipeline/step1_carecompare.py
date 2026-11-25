@@ -143,6 +143,10 @@ def main() -> None:
            .group_by("state").agg(pl.len().alias("active_pcps"))
            .write_parquet(os.path.join(C.PROC_DIR, "active_by_state.parquet")))
 
+    # PCP-physician NPI -> location, for the county Medicare-market trend
+    (active.select("NPI", "zip5", "state")
+           .write_parquet(os.path.join(C.PROC_DIR, "active_pcps.parquet")))
+
 
 if __name__ == "__main__":
     main()
