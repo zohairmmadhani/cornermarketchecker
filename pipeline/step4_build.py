@@ -279,7 +279,7 @@ def main() -> None:
         cty = counties_all.filter(pl.col("state") == st)
         # per-county need list (worst first)
         need = (cty.sort(["winddown", "vulnerable"], descending=True)
-                   .select("county_name", "vulnerable", "winddown", "tier_a",
+                   .select("county_name", "county_fips", "vulnerable", "winddown", "tier_a",
                            "active_pcps", "population", "pcp_per_10k", "medicare_at_risk")
                    .head(12).to_dicts())
         tps = talking_points(st, sp, cty)
@@ -370,6 +370,12 @@ def main() -> None:
             "targets": "FPA states ranked by winding-down solo PCPs",
         },
         "sources": sources,
+        "data_years": {
+            "partb_base": vint.get("partb_base", {}).get("year"),
+            "partb_latest": vint.get("partb_latest", {}).get("year"),
+            "care_compare": vint.get("care_compare", {}).get("modified"),
+            "acs": C.ACS_YEAR,
+        },
         "national": national,
         "states": states_out,
         "state_list": sorted(present_states, key=lambda s: C.STATE_NAMES[s]),

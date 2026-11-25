@@ -125,7 +125,9 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
 /* county need table */
 .needtbl{display:flex;flex-direction:column;gap:3px}
 .needrow{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:7px 9px;border:1px solid var(--line);
-  border-radius:9px;background:var(--panel);font-size:12px}
+  border-radius:9px;background:var(--panel);font-size:12px;cursor:pointer}
+.needrow:hover{border-color:var(--accent)}
+.needrow.active{border-color:var(--accent);background:var(--accent-wash)}
 .needrow .cn{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .needrow .metrics{display:flex;gap:8px;font-size:11px;color:var(--muted);grid-column:1/-1;margin-top:2px}
 .needrow .metrics b{color:var(--fg)}
@@ -198,7 +200,10 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
 .pill.crit{background:var(--crit-wash);color:var(--crit)} .pill.ok{background:var(--ok-wash);color:var(--ok)}
 .pill.warn{background:var(--warn-wash);color:var(--warn)} .pill.flat{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
 .card{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel)}
-.card h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px}
+.card h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px;
+  display:flex;justify-content:space-between;align-items:baseline;gap:6px;flex-wrap:wrap}
+.card h3 .asof{text-transform:none;letter-spacing:0;color:var(--faint);font-weight:500;font-size:10px}
+.dhd .asof2{font-size:10.5px;color:var(--faint);margin-top:6px}
 .trend{display:flex;align-items:flex-end;gap:14px}
 .trend .bars{display:flex;align-items:flex-end;gap:10px;height:62px}
 .trend .bar{display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:flex-end;height:100%}
@@ -430,13 +435,26 @@ function renderPlaybook(){
 function renderNeed(){
   const rows=STATE.counties_need.filter(c=>c.vulnerable>0).slice(0,8);
   $('#needtbl').innerHTML=rows.map(c=>`
-    <div class="needrow"><div class="cn">${c.county_name}</div>
+    <div class="needrow" data-fips="${c.county_fips}" onclick="highlightCounty('${c.county_fips}')" title="Show ${c.county_name} on the map">
+      <div class="cn">${c.county_name}</div>
       <div class="pill-w">${c.winddown} winding down</div>
       <div class="metrics"><span>${c.vulnerable} at-risk</span>
         <span>${fmt(c.active_pcps)} active PCPs</span>
         <span class="${c.pcp_per_10k!=null&&c.pcp_per_10k<2.9?'shortflag':''}">${c.pcp_per_10k??'—'}/10k</span></div></div>`).join('')
     || '<div class="footnote">No at-risk solo PCPs recorded in this state.</div>';
 }
+function highlightCounty(fips){
+  if(!ctyLayer)return;
+  if(!map.hasLayer(ctyLayer)){ctyLayer.addTo(map);$('#L_supply').checked=true;}
+  let target=null;
+  ctyLayer.eachLayer(l=>{
+    if(l.feature.properties.GEOID===fips){l.setStyle({color:gv('--accent'),weight:3,fillOpacity:.78});l.bringToFront();target=l;}
+    else l.setStyle(countyStyle(l.feature));
+  });
+  if(target)map.fitBounds(target.getBounds(),{maxZoom:9,padding:[50,50]});
+  document.querySelectorAll('.needrow').forEach(r=>r.classList.toggle('active',r.dataset.fips===fips));
+}
+window.highlightCounty=highlightCounty;
 
 function drawLayers(){
   [ctyLayer,pinLayer].forEach(l=>{if(l)map.removeLayer(l);});
@@ -473,11 +491,13 @@ function applyFilter(){
 function openDetail(p,ll){
   const tm={A:['crit','Tier A · Imminent desert'],B:['warn','Tier B · Active watch'],C:['flat','Tier C · Monitor']};
   const[tc,tl]=tm[p.priority_tier]||['flat','—'];
+  const dy=SUMMARY.data_years||{},by=dy.partb_base||'base',ly=dy.partb_latest||'latest';
   const sp=p.is_winddown?'<span class="pill crit">● Actively winding down</span>'
     :(p.winddown_status==='stable_or_growing'?'<span class="pill ok">● Stable / growing</span>':'<span class="pill flat">○ No Medicare signal</span>');
   $('#detail').innerHTML=`<div class="dhd"><button class="closex" onclick="closeDetail()">×</button>
     <span class="tier pill ${tc}">${tl}</span><h2>${p.name||'Unknown'}</h2>
-    <div class="sub">${p.credential||''} · ${p.specialty} · NPI ${p.npi}</div></div>
+    <div class="sub">${p.credential||''} · ${p.specialty} · NPI ${p.npi}</div>
+    <div class="asof2">Provider details: CMS Care Compare, as of ${dy.care_compare||'—'}</div></div>
    <div class="dbody"><div>${sp}</div>
     <dl class="kv">
       <dt>Est. age</dt><dd>${p.est_age!=null?p.est_age+' (grad '+p.grad_year+')':'—'}</dd>
@@ -486,8 +506,8 @@ function openDetail(p,ll){
       <dt>County</dt><dd>${p.county||'—'}</dd>
       <dt>Address</dt><dd>${p.address} <button class="copyaddr" onclick="copyText(this.dataset.a,'Address copied')" data-a="${(p.address||'').replace(/"/g,'&quot;')}">copy</button></dd>
       <dt>Phone</dt><dd>${p.phone||'—'}</dd></dl>
-    <div class="card"><h3>2-year Medicare volume (Layer 2)</h3>${trendBlock(p)}</div>
-    <div class="card"><h3>Local supply · ${4}-mile catchment (Layer 3)</h3>
+    <div class="card"><h3>2-year Medicare volume <span class="asof">CMS Part B · ${by} → ${ly}</span></h3>${trendBlock(p)}</div>
+    <div class="card"><h3>Local supply · 4-mi catchment <span class="asof">Care Compare ${dy.care_compare||''} · pop ACS ${dy.acs||''}</span></h3>
       <div class="supply">
         <div class="s"><div class="n tnum">${fmt(p.nearby_active_pcps)}</div><div class="l">PCPs within 4 mi</div></div>
         <div class="s"><div class="n tnum">${p.pcps_per_10k!=null?p.pcps_per_10k:'—'}</div><div class="l">PCPs / 10k</div></div>
@@ -501,12 +521,13 @@ function trendBlock(p){
   const b=p.benes_base,l=p.benes_latest;
   if(b==null&&l==null)return '<div class="note">No Medicare volume on file (commercial-heavy or suppressed &lt;11).</div>';
   const mx=Math.max(b||0,l||0,1),h=v=>v==null?3:Math.max(3,Math.round(v/mx*58)),pc=p.benes_pct_change;
+  const dy=SUMMARY.data_years||{},by=dy.partb_base||'base',ly=dy.partb_latest||'latest';
   const dc=pc==null?gv('--muted'):(pc<=-20?gv('--crit'):(pc<0?gv('--warn'):gv('--ok'))),sg=pc==null?'':(pc>0?'+':'');
   return `<div class="trend"><div class="bars">
-    <div class="bar"><div class="v">${fmt(b)}</div><div class="col" style="height:${h(b)}px;background:var(--faint)"></div><div class="yr">base</div></div>
-    <div class="bar"><div class="v">${fmt(l)}</div><div class="col" style="height:${h(l)}px;background:${dc}"></div><div class="yr">latest</div></div></div>
+    <div class="bar"><div class="v">${fmt(b)}</div><div class="col" style="height:${h(b)}px;background:var(--faint)"></div><div class="yr">${by}</div></div>
+    <div class="bar"><div class="v">${fmt(l)}</div><div class="col" style="height:${h(l)}px;background:${dc}"></div><div class="yr">${ly}</div></div></div>
     <div class="delta"><div class="big" style="color:${dc}">${pc==null?'n/a':sg+pc+'%'}</div><div class="lb">unique Medicare<br>beneficiaries</div></div></div>
-    ${p.winddown_status==='dropout_no_medicare'?'<div class="note" style="margin-top:8px;color:var(--crit)">Billed in the base year, none in the latest — stopped.</div>':''}`;
+    ${p.winddown_status==='dropout_no_medicare'?`<div class="note" style="margin-top:8px;color:var(--crit)">Billed in ${by}, none in ${ly} — stopped.</div>`:''}`;
 }
 function closeDetail(){$('#detail').classList.remove('open');}
 window.closeDetail=closeDetail;

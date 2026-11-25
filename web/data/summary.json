@@ -41,6 +41,12 @@
    "landing": "https://www.census.gov/programs-surveys/acs/data/summary-file.html"
   }
  ],
+ "data_years": {
+  "partb_base": 2022,
+  "partb_latest": 2024,
+  "care_compare": "2026-10-30",
+  "acs": 2022
+ },
  "national": {
   "states_covered": 52,
   "vulnerable_total": 7338,
