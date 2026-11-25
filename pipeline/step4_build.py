@@ -456,8 +456,6 @@ def main() -> None:
         "national": national,
         "states": states_out,
         "state_list": sorted(present_states, key=lambda s: C.STATE_NAMES[s]),
-        "zip_county": zip_to_county(),
-        "fips_state": C.STATE_FIPS,
         "targets": targets,
         "fpa_states": sorted(C.FPA_STATES),
         "corner_active": sorted(C.CORNER_ACTIVE), "corner_expansion": sorted(C.CORNER_EXPANSION),
