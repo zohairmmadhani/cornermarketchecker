@@ -15,4 +15,4 @@ pipeline/__pycache__/
 .ipynb_checkpoints/
 
 # Generated standalone (regenerate with build_standalone.py)
-web/supply_cliff_radar.html
+web/open_territory.html

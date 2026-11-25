@@ -1,16 +1,16 @@
-# Supply Cliff Radar — Retiring Solo PCP Intelligence
+# Open Territory — Retiring Solo PCP Intelligence
 
 Finds **aging, solo primary-care physicians who are actively winding down their
 practices** in **every U.S. state**, shows where their patients are about to be
-orphaned, and hands Corner Health a ready-made argument for payer negotiations.
-Pick a state and you get that state's supply cliff, its county-level need
-ranking, a payer-negotiation playbook, and a view of where Corner should expand
-next.
+left without a doctor, and hands Corner Health both a site-selection map and a
+ready-made payer-negotiation argument. Pick a state and you get a one-line
+read-out, three headline numbers, a county map shaded by local primary-care
+supply, a payer playbook, and where Corner should expand next.
 
-**▶ Interactive map:** published as a Claude Artifact. Choose any state from the
-dropdown; the map, stats, playbook and county ranking all update to that state.
-Click any pin for a full provider drill-down card. Serve `web/` and open
-`index.html` locally, or use the shared artifact link.
+**▶ Interactive map ("Open Territory"):** published as a Claude Artifact, and
+also as a single self-contained `open_territory.html` (built by
+`pipeline/build_standalone.py`) you can double-click to open in any browser with
+no server. Serve `web/` and open `index.html` locally, or use the artifact link.
 
 Two commercial jobs it serves:
 1. **Payer / insurer negotiations** — address-level proof of coming access

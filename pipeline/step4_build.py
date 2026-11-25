@@ -231,6 +231,25 @@ def talking_points(state, sp, counties) -> list[str]:
     return tp
 
 
+def all_county_supply() -> dict:
+    """county FIPS -> active PCPs per 10k residents (for the choropleth)."""
+    xwalk = reference.zcta_county().select("zcta", "county_fips")
+    by_zip = pl.read_parquet(os.path.join(C.PROC_DIR, "active_by_zip.parquet"))
+    active = (by_zip.join(xwalk, left_on="zip5", right_on="zcta", how="left")
+                    .group_by("county_fips").agg(pl.col("active_pcps").sum().alias("active")))
+    pop = (reference.zcta_population().join(xwalk, on="zcta", how="left")
+           .group_by("county_fips").agg(pl.col("population").sum().alias("pop")))
+    m = (active.join(pop, on="county_fips", how="full", coalesce=True)
+               .with_columns(pl.col("active").fill_null(0), pl.col("pop").fill_null(0)))
+    out = {}
+    for r in m.iter_rows(named=True):
+        if r["county_fips"] is None:
+            continue
+        per10k = round(r["active"] / r["pop"] * 10000, 2) if r["pop"] > 0 else None
+        out[r["county_fips"]] = per10k
+    return out
+
+
 # --------------------------------------------------------------------------
 # main
 # --------------------------------------------------------------------------
@@ -244,9 +263,11 @@ def main() -> None:
         .group_by("state").agg(pl.col("population").sum().alias("population")))
 
     print(f"[step4] pins positioned: {pins.height:,}")
+    county_supply = all_county_supply()
     us_counties = json.load(open(os.path.join(C.GEO_DIR, "us_counties.geojson")))
     counties_by_state: dict[str, list] = {}
     for f in us_counties["features"]:
+        f["properties"]["supply_per_10k"] = county_supply.get(f["properties"].get("GEOID"))
         counties_by_state.setdefault(f["properties"]["st"], []).append(f)
 
     vint = C.read_vintage()
@@ -262,14 +283,12 @@ def main() -> None:
                            "active_pcps", "population", "pcp_per_10k", "medicare_at_risk")
                    .head(12).to_dicts())
         tps = talking_points(st, sp, cty)
-        hexes = state_hexes(st, supply_pts, pop_pts)
         # bbox
         la = sp["lat"].to_list(); lo = sp["lon"].to_list()
         bbox = [min(lo), min(la), max(lo), max(la)]
         state_file = {
             "state": st, "name": C.STATE_NAMES[st],
             "pins": _round_features([pin_feature(r) for r in sp.iter_rows(named=True)], 5),
-            "hexes": _round_features(hexes, 4),
             "counties": _round_features(counties_by_state.get(st, []), 3),
             "talking_points": tps, "counties_need": need, "bbox": bbox,
         }
@@ -277,11 +296,23 @@ def main() -> None:
 
         apcp = int(active_state.filter(pl.col("state") == st)["active_pcps"].sum())
         spop = int(pop_state.filter(pl.col("state") == st)["population"].sum() or 0)
+        n_wd = int(sp["is_winddown"].sum())
+        med = int(sp.filter(pl.col("is_winddown"))["benes_latest"].fill_null(0).sum())
+        est_patients = n_wd * C.EST_PANEL_SIZE
+        if n_wd:
+            lede = (f"{n_wd} solo doctors here are actively winding down — about {med:,} Medicare "
+                    f"patients (and their larger full panels, ~{est_patients:,} people) will need a new "
+                    f"primary-care home as they exit.")
+        else:
+            lede = (f"{sp.height} solo PCPs age ~66+ are on the watch list, but none show an active "
+                    f"Medicare decline yet — a pipeline to monitor, not an immediate opening.")
         states_out[st] = {
             "name": C.STATE_NAMES[st], "fpa": st in C.FPA_STATES,
             "corner_status": ("active" if st in C.CORNER_ACTIVE else
                               "expansion" if st in C.CORNER_EXPANSION else
                               "fpa" if st in C.FPA_STATES else "non_fpa"),
+            "lede": lede,
+            "est_patients_at_risk": est_patients,
             "vulnerable": sp.height,
             "winddown": int(sp["is_winddown"].sum()),
             "tier_a": sp.filter(pl.col("priority_tier") == "A").height,
