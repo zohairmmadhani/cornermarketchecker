@@ -1,0 +1,580 @@
+<title>Supply Cliff Radar</title>
+<style>
+/* Leaflet 1.9.4 */
+.leaflet-image-layer,.leaflet-layer,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-pane,.leaflet-pane>canvas,.leaflet-pane>svg,.leaflet-tile,.leaflet-tile-container,.leaflet-zoom-box{position:absolute;left:0;top:0}.leaflet-container{overflow:hidden}.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-user-drag:none}.leaflet-tile::selection{background:0 0}.leaflet-safari .leaflet-tile{image-rendering:-webkit-optimize-contrast}.leaflet-safari .leaflet-tile-container{width:1600px;height:1600px;-webkit-transform-origin:0 0}.leaflet-marker-icon,.leaflet-marker-shadow{display:block}.leaflet-container .leaflet-overlay-pane svg{max-width:none!important;max-height:none!important}.leaflet-container .leaflet-marker-pane img,.leaflet-container .leaflet-shadow-pane img,.leaflet-container .leaflet-tile,.leaflet-container .leaflet-tile-pane img,.leaflet-container img.leaflet-image-layer{max-width:none!important;max-height:none!important;width:auto;padding:0}.leaflet-container img.leaflet-tile{mix-blend-mode:plus-lighter}.leaflet-container.leaflet-touch-zoom{-ms-touch-action:pan-x pan-y;touch-action:pan-x pan-y}.leaflet-container.leaflet-touch-drag{-ms-touch-action:pinch-zoom;touch-action:none;touch-action:pinch-zoom}.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom{-ms-touch-action:none;touch-action:none}.leaflet-container{-webkit-tap-highlight-color:transparent}.leaflet-container a{-webkit-tap-highlight-color:rgba(51,181,229,.4)}.leaflet-tile{filter:inherit;visibility:hidden}.leaflet-tile-loaded{visibility:inherit}.leaflet-zoom-box{width:0;height:0;-moz-box-sizing:border-box;box-sizing:border-box;z-index:800}.leaflet-overlay-pane svg{-moz-user-select:none}.leaflet-pane{z-index:400}.leaflet-tile-pane{z-index:200}.leaflet-overlay-pane{z-index:400}.leaflet-shadow-pane{z-index:500}.leaflet-marker-pane{z-index:600}.leaflet-tooltip-pane{z-index:650}.leaflet-popup-pane{z-index:700}.leaflet-map-pane canvas{z-index:100}.leaflet-map-pane svg{z-index:200}.leaflet-vml-shape{width:1px;height:1px}.lvml{behavior:url(#default#VML);display:inline-block;position:absolute}.leaflet-control{position:relative;z-index:800;pointer-events:visiblePainted;pointer-events:auto}.leaflet-bottom,.leaflet-top{position:absolute;z-index:1000;pointer-events:none}.leaflet-top{top:0}.leaflet-right{right:0}.leaflet-bottom{bottom:0}.leaflet-left{left:0}.leaflet-control{float:left;clear:both}.leaflet-right .leaflet-control{float:right}.leaflet-top .leaflet-control{margin-top:10px}.leaflet-bottom .leaflet-control{margin-bottom:10px}.leaflet-left .leaflet-control{margin-left:10px}.leaflet-right .leaflet-control{margin-right:10px}.leaflet-fade-anim .leaflet-popup{opacity:0;-webkit-transition:opacity .2s linear;-moz-transition:opacity .2s linear;transition:opacity .2s linear}.leaflet-fade-anim .leaflet-map-pane .leaflet-popup{opacity:1}.leaflet-zoom-animated{-webkit-transform-origin:0 0;-ms-transform-origin:0 0;transform-origin:0 0}svg.leaflet-zoom-animated{will-change:transform}.leaflet-zoom-anim .leaflet-zoom-animated{-webkit-transition:-webkit-transform .25s cubic-bezier(0,0,.25,1);-moz-transition:-moz-transform .25s cubic-bezier(0,0,.25,1);transition:transform .25s cubic-bezier(0,0,.25,1)}.leaflet-pan-anim .leaflet-tile,.leaflet-zoom-anim .leaflet-tile{-webkit-transition:none;-moz-transition:none;transition:none}.leaflet-zoom-anim .leaflet-zoom-hide{visibility:hidden}.leaflet-interactive{cursor:pointer}.leaflet-grab{cursor:-webkit-grab;cursor:-moz-grab;cursor:grab}.leaflet-crosshair,.leaflet-crosshair .leaflet-interactive{cursor:crosshair}.leaflet-control,.leaflet-popup-pane{cursor:auto}.leaflet-dragging .leaflet-grab,.leaflet-dragging .leaflet-grab .leaflet-interactive,.leaflet-dragging .leaflet-marker-draggable{cursor:move;cursor:-webkit-grabbing;cursor:-moz-grabbing;cursor:grabbing}.leaflet-image-layer,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-pane>svg path,.leaflet-tile-container{pointer-events:none}.leaflet-image-layer.leaflet-interactive,.leaflet-marker-icon.leaflet-interactive,.leaflet-pane>svg path.leaflet-interactive,svg.leaflet-image-layer.leaflet-interactive path{pointer-events:visiblePainted;pointer-events:auto}.leaflet-container{background:#ddd;outline-offset:1px}.leaflet-container a{color:#0078a8}.leaflet-zoom-box{border:2px dotted #38f;background:rgba(255,255,255,.5)}.leaflet-container{font-family:"Helvetica Neue",Arial,Helvetica,sans-serif;font-size:12px;font-size:.75rem;line-height:1.5}.leaflet-bar{box-shadow:0 1px 5px rgba(0,0,0,.65);border-radius:4px}.leaflet-bar a{background-color:#fff;border-bottom:1px solid #ccc;width:26px;height:26px;line-height:26px;display:block;text-align:center;text-decoration:none;color:#000}.leaflet-bar a,.leaflet-control-layers-toggle{background-position:50% 50%;background-repeat:no-repeat;display:block}.leaflet-bar a:focus,.leaflet-bar a:hover{background-color:#f4f4f4}.leaflet-bar a:first-child{border-top-left-radius:4px;border-top-right-radius:4px}.leaflet-bar a:last-child{border-bottom-left-radius:4px;border-bottom-right-radius:4px;border-bottom:none}.leaflet-bar a.leaflet-disabled{cursor:default;background-color:#f4f4f4;color:#bbb}.leaflet-touch .leaflet-bar a{width:30px;height:30px;line-height:30px}.leaflet-touch .leaflet-bar a:first-child{border-top-left-radius:2px;border-top-right-radius:2px}.leaflet-touch .leaflet-bar a:last-child{border-bottom-left-radius:2px;border-bottom-right-radius:2px}.leaflet-control-zoom-in,.leaflet-control-zoom-out{font:bold 18px 'Lucida Console',Monaco,monospace;text-indent:1px}.leaflet-touch .leaflet-control-zoom-in,.leaflet-touch .leaflet-control-zoom-out{font-size:22px}.leaflet-control-layers{box-shadow:0 1px 5px rgba(0,0,0,.4);background:#fff;border-radius:5px}.leaflet-control-layers-toggle{background-image:url(images/layers.png);width:36px;height:36px}.leaflet-retina .leaflet-control-layers-toggle{background-image:url(images/layers-2x.png);background-size:26px 26px}.leaflet-touch .leaflet-control-layers-toggle{width:44px;height:44px}.leaflet-control-layers .leaflet-control-layers-list,.leaflet-control-layers-expanded .leaflet-control-layers-toggle{display:none}.leaflet-control-layers-expanded .leaflet-control-layers-list{display:block;position:relative}.leaflet-control-layers-expanded{padding:6px 10px 6px 6px;color:#333;background:#fff}.leaflet-control-layers-scrollbar{overflow-y:scroll;overflow-x:hidden;padding-right:5px}.leaflet-control-layers-selector{margin-top:2px;position:relative;top:1px}.leaflet-control-layers label{display:block;font-size:13px;font-size:1.08333em}.leaflet-control-layers-separator{height:0;border-top:1px solid #ddd;margin:5px -10px 5px -6px}.leaflet-default-icon-path{background-image:url(images/marker-icon.png)}.leaflet-container .leaflet-control-attribution{background:#fff;background:rgba(255,255,255,.8);margin:0}.leaflet-control-attribution,.leaflet-control-scale-line{padding:0 5px;color:#333;line-height:1.4}.leaflet-control-attribution a{text-decoration:none}.leaflet-control-attribution a:focus,.leaflet-control-attribution a:hover{text-decoration:underline}.leaflet-attribution-flag{display:inline!important;vertical-align:baseline!important;width:1em;height:.6669em}.leaflet-left .leaflet-control-scale{margin-left:5px}.leaflet-bottom .leaflet-control-scale{margin-bottom:5px}.leaflet-control-scale-line{border:2px solid #777;border-top:none;line-height:1.1;padding:2px 5px 1px;white-space:nowrap;-moz-box-sizing:border-box;box-sizing:border-box;background:rgba(255,255,255,.8);text-shadow:1px 1px #fff}.leaflet-control-scale-line:not(:first-child){border-top:2px solid #777;border-bottom:none;margin-top:-2px}.leaflet-control-scale-line:not(:first-child):not(:last-child){border-bottom:2px solid #777}.leaflet-touch .leaflet-bar,.leaflet-touch .leaflet-control-attribution,.leaflet-touch .leaflet-control-layers{box-shadow:none}.leaflet-touch .leaflet-bar,.leaflet-touch .leaflet-control-layers{border:2px solid rgba(0,0,0,.2);background-clip:padding-box}.leaflet-popup{position:absolute;text-align:center;margin-bottom:20px}.leaflet-popup-content-wrapper{padding:1px;text-align:left;border-radius:12px}.leaflet-popup-content{margin:13px 24px 13px 20px;line-height:1.3;font-size:13px;font-size:1.08333em;min-height:1px}.leaflet-popup-content p{margin:17px 0;margin:1.3em 0}.leaflet-popup-tip-container{width:40px;height:20px;position:absolute;left:50%;margin-top:-1px;margin-left:-20px;overflow:hidden;pointer-events:none}.leaflet-popup-tip{width:17px;height:17px;padding:1px;margin:-10px auto 0;pointer-events:auto;-webkit-transform:rotate(45deg);-moz-transform:rotate(45deg);-ms-transform:rotate(45deg);transform:rotate(45deg)}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#fff;color:#333;box-shadow:0 3px 14px rgba(0,0,0,.4)}.leaflet-container a.leaflet-popup-close-button{position:absolute;top:0;right:0;border:none;text-align:center;width:24px;height:24px;font:16px/24px Tahoma,Verdana,sans-serif;color:#757575;text-decoration:none;background:0 0}.leaflet-container a.leaflet-popup-close-button:focus,.leaflet-container a.leaflet-popup-close-button:hover{color:#585858}.leaflet-popup-scrolled{overflow:auto}.leaflet-oldie .leaflet-popup-content-wrapper{-ms-zoom:1}.leaflet-oldie .leaflet-popup-tip{width:24px;margin:0 auto}.leaflet-oldie .leaflet-control-layers,.leaflet-oldie .leaflet-control-zoom,.leaflet-oldie .leaflet-popup-content-wrapper,.leaflet-oldie .leaflet-popup-tip{border:1px solid #999}.leaflet-div-icon{background:#fff;border:1px solid #666}.leaflet-tooltip{position:absolute;padding:6px;background-color:#fff;border:1px solid #fff;border-radius:3px;color:#222;white-space:nowrap;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.4)}.leaflet-tooltip.leaflet-interactive{cursor:pointer;pointer-events:auto}.leaflet-tooltip-bottom:before,.leaflet-tooltip-left:before,.leaflet-tooltip-right:before,.leaflet-tooltip-top:before{position:absolute;pointer-events:none;border:6px solid transparent;background:0 0;content:""}.leaflet-tooltip-bottom{margin-top:6px}.leaflet-tooltip-top{margin-top:-6px}.leaflet-tooltip-bottom:before,.leaflet-tooltip-top:before{left:50%;margin-left:-6px}.leaflet-tooltip-top:before{bottom:0;margin-bottom:-12px;border-top-color:#fff}.leaflet-tooltip-bottom:before{top:0;margin-top:-12px;margin-left:-6px;border-bottom-color:#fff}.leaflet-tooltip-left{margin-left:-6px}.leaflet-tooltip-right{margin-left:6px}.leaflet-tooltip-left:before,.leaflet-tooltip-right:before{top:50%;margin-top:-6px}.leaflet-tooltip-left:before{right:0;margin-right:-12px;border-left-color:#fff}.leaflet-tooltip-right:before{left:0;margin-left:-12px;border-right-color:#fff}@media print{.leaflet-control{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
+/* ============================================================
+   Supply Cliff Radar — Corner Health GTM / payer intelligence
+   One state at a time: picker + that state's stats, payer
+   playbook, county need-ranking and expansion targets beside a
+   tile-free Leaflet data map (CSP blocks external tiles).
+   ============================================================ */
+:root{
+  --bg:#eef2f4; --surface:#ffffff; --panel:#f7f9fb; --rail:#ffffff;
+  --fg:#0e1b23; --muted:#5a6b76; --faint:#8697a1; --line:#dde5ea;
+  --map-bg:#e4eaed; --county:#eef2f4; --county-line:#c6d2d9;
+  --accent:#0d9c89; --accent-ink:#0a7a6c; --accent-wash:rgba(13,156,137,.10);
+  --crit:#e24a3b; --crit-wash:rgba(226,74,59,.12);
+  --warn:#e2902f; --warn-wash:rgba(226,144,47,.14);
+  --ok:#3c9a68; --ok-wash:rgba(60,154,104,.12);
+  --unknown:#93a4ae;
+  --shadow:0 6px 24px rgba(16,36,48,.14),0 1px 2px rgba(16,36,48,.10);
+  --font:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --display:"Space Grotesk",var(--font);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b1216; --surface:#121d24; --panel:#0f191f; --rail:#101a20;
+  --fg:#e7eef2; --muted:#93a6b1; --faint:#6a7e8a;
+  --line:#22313a; --map-bg:#0a1115; --county:#111c23; --county-line:#223742;
+  --accent:#1cc0ab; --accent-ink:#36d2bd; --accent-wash:rgba(28,192,171,.14);
+  --crit:#f0695a; --crit-wash:rgba(240,105,90,.16);
+  --warn:#eda64a; --warn-wash:rgba(237,166,74,.16);
+  --ok:#52b681; --ok-wash:rgba(82,182,129,.16);
+  --unknown:#5f7580;
+  --shadow:0 8px 30px rgba(0,0,0,.45),0 1px 2px rgba(0,0,0,.4);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0b1216; --surface:#121d24; --panel:#0f191f; --rail:#101a20;
+  --fg:#e7eef2; --muted:#93a6b1; --faint:#6a7e8a;
+  --line:#22313a; --map-bg:#0a1115; --county:#111c23; --county-line:#223742;
+  --accent:#1cc0ab; --accent-ink:#36d2bd; --accent-wash:rgba(28,192,171,.14);
+  --crit:#f0695a; --crit-wash:rgba(240,105,90,.16);
+  --warn:#eda64a; --warn-wash:rgba(237,166,74,.16);
+  --ok:#52b681; --ok-wash:rgba(82,182,129,.16);
+  --unknown:#5f7580;
+  --shadow:0 8px 30px rgba(0,0,0,.45),0 1px 2px rgba(0,0,0,.4);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);
+  font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+#app{height:100%;display:flex;flex-direction:column;overflow:hidden}
+h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;text-wrap:balance}
+button{font-family:inherit}
+.tnum{font-variant-numeric:tabular-nums}
+
+header{display:flex;align-items:center;gap:12px;padding:9px 16px;background:var(--surface);
+  border-bottom:1px solid var(--line);z-index:600;flex:none;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:30px;height:30px;border-radius:8px;flex:none;background:linear-gradient(135deg,var(--accent),var(--accent-ink));
+  display:grid;place-items:center;color:#fff;font-family:var(--display);font-weight:700;font-size:15px}
+.brand h1{font-size:15.5px;letter-spacing:-.01em;white-space:nowrap}
+.brand p{margin:0;font-size:11px;color:var(--muted);white-space:nowrap}
+.hspacer{flex:1}
+.statepick{display:flex;align-items:center;gap:8px}
+.statepick label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+#stateSelect{appearance:none;font-family:var(--display);font-weight:600;font-size:15px;color:var(--fg);
+  background:var(--panel);border:1.5px solid var(--accent);border-radius:10px;padding:8px 32px 8px 12px;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--accent) 50%),linear-gradient(135deg,var(--accent) 50%,transparent 50%);
+  background-position:calc(100% - 17px) 17px,calc(100% - 12px) 17px;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+.themebtn{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);
+  color:var(--fg);cursor:pointer;font-size:15px}
+.iconbtn{display:none;border:1px solid var(--line);background:var(--panel);color:var(--fg);
+  border-radius:9px;padding:7px 10px;font-size:12.5px;font-weight:600;cursor:pointer}
+
+.body{flex:1;display:grid;grid-template-columns:360px 1fr;min-height:0}
+.rail{background:var(--rail);border-right:1px solid var(--line);overflow-y:auto;padding:14px 14px 30px;
+  display:flex;flex-direction:column;gap:15px}
+.mapwrap{position:relative;min-width:0;min-height:0}
+#map{position:absolute;inset:0}
+.leaflet-container{background:var(--map-bg);font-family:var(--font)}
+.leaflet-interactive:focus{outline:none}
+
+.block{display:flex;flex-direction:column;gap:9px}
+.block>.hd{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:default}
+.block .hd h2{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+.block .hd .mini{font-size:11px;color:var(--faint)}
+.collap>.hd{cursor:pointer}
+.collap>.hd .chev{color:var(--faint);font-size:11px;transition:transform .15s}
+.collap.closed>.body2{display:none}
+.collap.closed>.hd .chev{transform:rotate(-90deg)}
+
+.stateline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.stateline h2{font-family:var(--display);font-size:17px;font-weight:600}
+.badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:999px}
+.badge.active{background:var(--accent-wash);color:var(--accent-ink);border:1px solid var(--accent)}
+.badge.expansion{background:var(--warn-wash);color:var(--warn)}
+.badge.fpa{background:var(--ok-wash);color:var(--ok)}
+.badge.non{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:10px 11px}
+.stat .n{font-family:var(--display);font-size:21px;font-weight:600;letter-spacing:-.02em;line-height:1}
+.stat .l{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.25}
+.stat.crit .n{color:var(--crit)} .stat.warn .n{color:var(--warn)} .stat.accent .n{color:var(--accent-ink)}
+.stat.wide{grid-column:1/-1}
+
+.ctl{display:flex;flex-direction:column;gap:7px}
+.toggle{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:9px;border:1px solid var(--line);
+  background:var(--panel);cursor:pointer;font-size:12.5px;user-select:none}
+.toggle:hover,.seg button:hover{border-color:var(--accent)}
+.toggle input{accent-color:var(--accent);width:15px;height:15px;margin:0;flex:none}
+.toggle .sw{margin-left:auto;font-size:11px;color:var(--faint)}
+.toggle .dot{width:11px;height:11px;border-radius:50%;flex:none;margin-left:auto}
+.seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{flex:1;border:0;background:var(--panel);color:var(--muted);padding:7px 4px;font-size:12px;font-weight:600;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:11px;color:var(--muted);font-weight:600}
+select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--line);
+  background:var(--panel);color:var(--fg);font-family:inherit;font-size:12.5px;cursor:pointer}
+
+/* county need table */
+.needtbl{display:flex;flex-direction:column;gap:3px}
+.needrow{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:7px 9px;border:1px solid var(--line);
+  border-radius:9px;background:var(--panel);font-size:12px}
+.needrow .cn{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.needrow .metrics{display:flex;gap:8px;font-size:11px;color:var(--muted);grid-column:1/-1;margin-top:2px}
+.needrow .metrics b{color:var(--fg)}
+.needrow .pill-w{color:var(--crit);font-weight:700;font-variant-numeric:tabular-nums}
+.shortflag{color:var(--warn);font-weight:700}
+
+/* playbook */
+.playbook{display:flex;flex-direction:column;gap:8px}
+.tp{border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:9px;padding:10px 11px;
+  background:var(--panel);font-size:12px;line-height:1.5}
+.tp:nth-child(1){border-left-color:var(--crit)}
+.tp:nth-child(2){border-left-color:var(--warn)}
+.tp:nth-child(3){border-left-color:var(--accent)}
+.tp strong{font-weight:700}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:10px;border-radius:10px;
+  border:1px solid var(--accent);background:var(--accent);color:#fff;font-weight:600;font-size:13px;cursor:pointer}
+.btn.ghost{background:var(--panel);color:var(--fg);border-color:var(--line)}
+.btn:active{transform:translateY(1px)}
+
+/* targets */
+.targets{display:flex;flex-direction:column;gap:5px}
+.trow{display:flex;align-items:center;gap:9px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;
+  background:var(--panel);cursor:pointer;font-size:12.5px}
+.trow:hover{border-color:var(--accent)}
+.trow .rk{font-family:var(--display);font-weight:700;color:var(--faint);width:16px}
+.trow .nm{font-weight:600;flex:1}
+.trow .mx{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.trow .mx b{color:var(--crit)}
+
+/* sources */
+.src{display:flex;flex-direction:column;gap:7px;font-size:11px}
+.srcrow{border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--panel)}
+.srcrow .nm{font-weight:600;color:var(--fg);font-size:11.5px}
+.srcrow .meta{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:5px}
+.srcrow .asof{color:var(--faint)}
+.srcrow a{color:var(--accent-ink);text-decoration:none;font-weight:600;border:1px solid var(--line);
+  border-radius:7px;padding:3px 8px;background:var(--surface)}
+.srcrow a:hover{border-color:var(--accent)}
+.footnote{font-size:10.5px;color:var(--faint);line-height:1.5}
+
+/* map overlays */
+.mapctl{position:absolute;z-index:500;display:flex;gap:6px}
+.mapctl.tr{top:12px;right:12px;flex-direction:column;align-items:flex-end}
+.countpill{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px;
+  font-size:12px;box-shadow:var(--shadow);font-weight:600}
+.countpill b{color:var(--accent-ink)}
+.legendbox{position:absolute;left:12px;bottom:12px;z-index:500;background:var(--surface);border:1px solid var(--line);
+  border-radius:11px;padding:10px 12px;box-shadow:var(--shadow);font-size:11px;max-width:240px}
+.legendbox .row{display:flex;align-items:center;gap:7px;margin-top:5px;color:var(--muted)}
+.legendbox .key{width:13px;height:13px;border-radius:50%;flex:none;border:2px solid var(--line)}
+.legendbox .swatches{display:flex;gap:2px;margin-top:4px}
+.legendbox .swatches i{height:9px;flex:1;border-radius:2px}
+.legendbox b{color:var(--fg)}
+
+/* detail card */
+#detail{position:absolute;top:0;right:0;bottom:0;width:372px;max-width:88vw;z-index:700;background:var(--surface);
+  border-left:1px solid var(--line);box-shadow:var(--shadow);transform:translateX(102%);transition:transform .22s ease;
+  display:flex;flex-direction:column}
+#detail.open{transform:none}
+.dhd{padding:16px 16px 12px;border-bottom:1px solid var(--line);position:relative}
+.dhd .tier{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em}
+.dhd h2{font-size:19px;margin:9px 0 2px}
+.dhd .sub{font-size:12.5px;color:var(--muted)}
+.closex{position:absolute;top:12px;right:12px;width:30px;height:30px;border-radius:8px;border:1px solid var(--line);
+  background:var(--panel);color:var(--fg);font-size:16px;cursor:pointer;line-height:1}
+.dbody{padding:14px 16px 22px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.kv{display:grid;grid-template-columns:116px 1fr;gap:3px 10px;font-size:12.5px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font-weight:500}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px}
+.pill.crit{background:var(--crit-wash);color:var(--crit)} .pill.ok{background:var(--ok-wash);color:var(--ok)}
+.pill.warn{background:var(--warn-wash);color:var(--warn)} .pill.flat{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
+.card{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel)}
+.card h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px}
+.trend{display:flex;align-items:flex-end;gap:14px}
+.trend .bars{display:flex;align-items:flex-end;gap:10px;height:62px}
+.trend .bar{display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:flex-end;height:100%}
+.trend .bar .col{width:30px;border-radius:5px 5px 0 0;min-height:3px}
+.trend .bar .yr{font-size:10.5px;color:var(--faint)} .trend .bar .v{font-size:12px;font-weight:700}
+.trend .delta .big{font-family:var(--display);font-size:24px;font-weight:600}
+.trend .delta .lb{font-size:10.5px;color:var(--muted)}
+.supply{display:flex;gap:10px}
+.supply .s{flex:1;text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 4px}
+.supply .s .n{font-family:var(--display);font-size:19px;font-weight:600}
+.supply .s .l{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.3}
+.note{font-size:11px;color:var(--faint);line-height:1.5}
+.copyaddr{display:inline-flex;gap:5px;cursor:pointer;color:var(--accent-ink);font-size:11px;font-weight:600;
+  border:1px solid var(--line);background:var(--panel);border-radius:7px;padding:2px 7px}
+
+#loading{position:absolute;inset:0;display:grid;place-items:center;z-index:800;background:var(--map-bg)}
+#loading .box{display:flex;flex-direction:column;align-items:center;gap:12px;color:var(--muted);font-size:13px}
+.spin{width:30px;height:30px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}#detail{transition:none}}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);z-index:900;background:var(--fg);
+  color:var(--bg);padding:10px 16px;border-radius:10px;font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;
+  transition:all .2s ease;box-shadow:var(--shadow)}
+#toast.show{opacity:1;transform:translateX(-50%)}
+#copybox{position:fixed;inset:0;z-index:950;background:rgba(5,15,20,.55);display:none;place-items:center;padding:20px}
+#copybox.show{display:grid}
+#copybox .inner{background:var(--surface);border:1px solid var(--line);border-radius:14px;max-width:580px;width:100%;
+  padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)}
+#copybox textarea{width:100%;height:240px;font-family:ui-monospace,Menlo,monospace;font-size:11px;border:1px solid var(--line);
+  border-radius:10px;padding:10px;background:var(--panel);color:var(--fg)}
+
+@media (max-width:860px){
+  .body{grid-template-columns:1fr}
+  .iconbtn{display:inline-block}
+  .brand p{display:none}
+  .rail{position:absolute;top:0;bottom:0;left:0;width:340px;max-width:88vw;z-index:650;transform:translateX(-102%);
+    transition:transform .22s ease;box-shadow:var(--shadow)}
+  .rail.open{transform:none}
+  #detail{width:100%;max-width:100%;top:auto;height:76%;border-left:0;border-top:1px solid var(--line);
+    border-radius:16px 16px 0 0;transform:translateY(102%)}
+  #detail.open{transform:none}
+}
+</style>
+
+<div id="app">
+  <header>
+    <button class="iconbtn" id="railToggle">☰</button>
+    <div class="brand"><div class="logo">C</div>
+      <div><h1>Supply Cliff Radar</h1><p>Retiring solo PCPs · Corner Health</p></div></div>
+    <div class="hspacer"></div>
+    <div class="statepick">
+      <label for="stateSelect">State</label>
+      <select id="stateSelect"></select>
+    </div>
+    <button class="themebtn" id="themeBtn" title="Theme">◐</button>
+  </header>
+
+  <div class="body">
+    <aside class="rail" id="rail">
+      <div class="block">
+        <div class="stateline"><h2 id="stName">—</h2><span id="stBadge"></span>
+          <span class="mini" id="stNational" style="margin-left:auto"></span></div>
+        <div class="stats" id="stats"></div>
+      </div>
+
+      <div class="block collap" id="playBlock">
+        <div class="hd"><h2>⚑ Payer playbook</h2><span class="chev">▾</span></div>
+        <div class="body2" style="display:flex;flex-direction:column;gap:9px">
+          <div class="playbook" id="playbook"></div>
+          <button class="btn ghost" id="copyPlay">⧉ Copy talking points</button>
+        </div>
+      </div>
+
+      <div class="block collap" id="needBlock">
+        <div class="hd"><h2>Counties in need</h2><span class="chev">▾</span></div>
+        <div class="body2"><div class="needtbl" id="needtbl"></div></div>
+      </div>
+
+      <div class="block collap" id="ctlBlock">
+        <div class="hd"><h2>Layers &amp; filters</h2><span class="chev">▾</span></div>
+        <div class="body2" style="display:flex;flex-direction:column;gap:9px">
+          <div class="ctl">
+            <label class="toggle"><input type="checkbox" id="L_pins" checked><span>Vulnerable solo PCPs</span><span class="sw" id="n_pins"></span></label>
+            <label class="toggle"><input type="checkbox" id="L_hex" checked><span>PCP supply density</span><span class="sw">hex</span></label>
+            <label class="toggle"><input type="checkbox" id="L_county" checked><span>County outlines</span></label>
+          </div>
+          <div class="field"><label>Priority tier</label>
+            <div class="seg" id="segTier"><button data-v="all" aria-pressed="true">All</button>
+              <button data-v="A">A</button><button data-v="B">B</button><button data-v="C">C</button></div></div>
+          <div class="field"><label>Primary specialty</label>
+            <select class="mini" id="selSpec"><option value="all">All primary care</option>
+              <option value="FAMILY PRACTICE">Family practice</option>
+              <option value="INTERNAL MEDICINE">Internal medicine</option>
+              <option value="GENERAL PRACTICE">General practice</option></select></div>
+          <label class="toggle"><input type="checkbox" id="fWind"><span>Only winding down</span><span class="dot" style="background:var(--crit)"></span></label>
+          <label class="toggle"><input type="checkbox" id="fThin"><span>Only thin local supply</span><span class="dot" style="background:var(--warn)"></span></label>
+          <button class="btn" id="exportBtn">⧉ Copy this list as CSV</button>
+        </div>
+      </div>
+
+      <div class="block collap" id="targetBlock">
+        <div class="hd"><h2>Expand next</h2><span class="mini">FPA states</span></div>
+        <div class="body2"><div class="targets" id="targets"></div>
+          <div class="footnote" style="margin-top:6px">NP full-practice-authority states, ranked by winding-down PCPs. Click to view.</div></div>
+      </div>
+
+      <div class="block collap closed" id="srcBlock">
+        <div class="hd"><h2>Sources &amp; vintage</h2><span class="chev">▾</span></div>
+        <div class="body2"><div class="src" id="sources"></div>
+          <div class="footnote" id="methodology" style="margin-top:8px"></div></div>
+      </div>
+    </aside>
+
+    <main class="mapwrap">
+      <div id="map"></div>
+      <div class="mapctl tr">
+        <div class="countpill"><b id="visCount">0</b> pins · <span id="asof"></span></div>
+      </div>
+      <div class="legendbox">
+        <div><b>Pin</b> = Medicare trend</div>
+        <div class="row"><span class="key" style="background:var(--crit);border-color:var(--crit)"></span>Winding down</div>
+        <div class="row"><span class="key" style="background:var(--ok);border-color:var(--ok)"></span>Stable</div>
+        <div class="row"><span class="key" style="background:var(--unknown);border-color:var(--unknown)"></span>No data</div>
+        <div class="row" style="margin-top:6px"><b>Ring</b> = thin supply · <b>size</b> = panel</div>
+        <div style="margin-top:6px"><b>Hex</b> = PCP density</div>
+        <div class="swatches" id="hexSwatches"></div>
+      </div>
+      <div id="loading"><div class="box"><div class="spin"></div><div>Loading CMS &amp; Census data…</div></div></div>
+    </main>
+  </div>
+
+  <section id="detail"></section>
+</div>
+
+<div id="toast"></div>
+<div id="copybox"><div class="inner"><div style="font-weight:600" id="copytitle">Copy</div>
+  <textarea id="copyta" readonly></textarea><button class="btn ghost" id="copyClose">Close</button></div></div>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+"use strict";
+const DATA='data/';
+const $=s=>document.querySelector(s);
+const fmt=n=>n==null?'—':Number(n).toLocaleString('en-US');
+const titlecase=s=>(s||'').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
+const gv=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);};
+const boldmd=s=>s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+
+let SUMMARY=null, STATE=null, curPins=[], curFiltered=[];
+const HEX_STOPS=[{max:0,c:'#d98a3d'},{max:2,c:'#e6c488'},{max:5,c:'#bcd0c6'},{max:10,c:'#7fc0b2'},{max:25,c:'#3ea796'},{max:1e9,c:'#126b60'}];
+const hexColor=n=>{for(const s of HEX_STOPS)if(n<=s.max)return s.c;return '#126b60';};
+const trendColor=s=>(s==='active_winddown'||s==='dropout_no_medicare')?gv('--crit'):(s==='stable_or_growing')?gv('--ok'):gv('--unknown');
+const pinRadius=b=>b==null?4.5:Math.max(4.5,Math.min(15,Math.sqrt(b)/2.1));
+
+const map=L.map('map',{preferCanvas:true,zoomControl:false,attributionControl:false,minZoom:3,maxZoom:14,zoomSnap:.25}).setView([39,-98],4);
+L.control.zoom({position:'bottomright'}).addTo(map);
+const paneCty=map.createPane('cty');paneCty.style.zIndex=350;
+const paneHex=map.createPane('hex');paneHex.style.zIndex=360;
+const panePins=map.createPane('pins');panePins.style.zIndex=450;
+let ctyLayer,hexLayer,pinLayer;
+
+const F={tier:'all',spec:'all',wind:false,thin:false};
+
+async function j(f){
+  if(window.__EMBED__){
+    if(f==='summary.json')return window.__EMBED__.summary;
+    const m=f.match(/states\/(\w+)\.json/);
+    if(m&&window.__EMBED__.states[m[1]])return window.__EMBED__.states[m[1]];
+  }
+  const r=await fetch(DATA+f);if(!r.ok)throw new Error(f);return r.json();
+}
+
+async function boot(){
+  SUMMARY=await j('summary.json');
+  buildSwatches();buildSelect();buildSources();buildTargets();
+  $('#asof').textContent='CMS '+(SUMMARY.sources[0]?.modified||'');
+  wire();
+  const def=SUMMARY.corner_active?.[0]||SUMMARY.state_list[0];
+  $('#stateSelect').value=def;
+  await selectState(def);
+  $('#loading').style.display='none';
+}
+
+function buildSelect(){
+  const sel=$('#stateSelect');const S=SUMMARY.states;
+  const groups=[['Corner markets',s=>s.corner_status==='active'],
+    ['Planned expansion',s=>s.corner_status==='expansion'],
+    ['Full Practice Authority (NP-ownable)',s=>s.corner_status==='fpa'],
+    ['Other states',s=>s.corner_status==='non_fpa']];
+  sel.innerHTML='';
+  for(const [label,test] of groups){
+    const sts=SUMMARY.state_list.filter(st=>test(S[st]));
+    if(!sts.length)continue;
+    const og=document.createElement('optgroup');og.label=label;
+    for(const st of sts){const o=document.createElement('option');o.value=st;
+      o.textContent=`${S[st].name} — ${S[st].vulnerable} at risk`;og.appendChild(o);}
+    sel.appendChild(og);
+  }
+}
+
+async function selectState(st){
+  const s=SUMMARY.states[st];
+  STATE=await j('states/'+st+'.json');
+  curPins=STATE.pins;
+  renderStats(st,s);renderPlaybook();renderNeed();
+  drawLayers();applyFilter();
+  if(STATE.bbox){const[a,b,c,d]=STATE.bbox;map.flyToBounds([[b,a],[d,c]],{padding:[40,40],duration:.5});}
+}
+
+function renderStats(st,s){
+  $('#stName').textContent=s.name;
+  const bmap={active:['active','Corner market'],expansion:['expansion','Planned'],fpa:['fpa','NP full practice authority'],non_fpa:['non','Restricted practice']};
+  const[cls,lbl]=bmap[s.corner_status];
+  $('#stBadge').innerHTML=`<span class="badge ${cls}">${lbl}</span>`;
+  $('#stNational').textContent=`${SUMMARY.national.vulnerable_total.toLocaleString()} nationwide`;
+  $('#stats').innerHTML=`
+    <div class="stat accent"><div class="n tnum">${s.vulnerable}</div><div class="l">Vulnerable solo PCPs</div></div>
+    <div class="stat crit"><div class="n tnum">${s.winddown}</div><div class="l">Winding down</div></div>
+    <div class="stat warn"><div class="n tnum">${s.tier_a}</div><div class="l">Tier A · act now</div></div>
+    <div class="stat"><div class="n tnum">${fmt(s.active_pcps)}</div><div class="l">Active PCPs</div></div>
+    <div class="stat"><div class="n tnum">${s.pcp_per_10k??'—'}</div><div class="l">PCPs / 10k</div></div>
+    <div class="stat"><div class="n tnum">${fmt(s.medicare_at_risk)}</div><div class="l">Medicare at risk</div></div>
+    <div class="stat wide"><div class="n tnum" style="font-size:15px">${s.compliance_zips} ZIPs · ${s.shortage_counties} counties</div><div class="l">2+ winding down / PCP shortage</div></div>`;
+  $('#n_pins').textContent=s.vulnerable;
+}
+
+function renderPlaybook(){
+  $('#playbook').innerHTML=STATE.talking_points.map(t=>`<div class="tp">${boldmd(t)}</div>`).join('');
+}
+function renderNeed(){
+  const rows=STATE.counties_need.filter(c=>c.vulnerable>0).slice(0,8);
+  $('#needtbl').innerHTML=rows.map(c=>`
+    <div class="needrow"><div class="cn">${c.county_name}</div>
+      <div class="pill-w">${c.winddown} winding down</div>
+      <div class="metrics"><span>${c.vulnerable} at-risk</span>
+        <span>${fmt(c.active_pcps)} active PCPs</span>
+        <span class="${c.pcp_per_10k!=null&&c.pcp_per_10k<2.9?'shortflag':''}">${c.pcp_per_10k??'—'}/10k</span></div></div>`).join('')
+    || '<div class="footnote">No at-risk solo PCPs recorded in this state.</div>';
+}
+
+function drawLayers(){
+  [ctyLayer,hexLayer,pinLayer].forEach(l=>{if(l)map.removeLayer(l);});
+  ctyLayer=L.geoJSON({type:'FeatureCollection',features:STATE.counties},{pane:'cty',interactive:true,
+    style:{color:gv('--county-line'),weight:.8,fillColor:gv('--county'),fillOpacity:.6},
+    onEachFeature:(f,l)=>l.bindTooltip(f.properties.NAME,{sticky:true})});
+  if($('#L_county').checked)ctyLayer.addTo(map);
+  hexLayer=L.geoJSON({type:'FeatureCollection',features:STATE.hexes},{pane:'hex',interactive:false,
+    style:f=>({stroke:false,fillColor:hexColor(f.properties.pcp_count),fillOpacity:.5})});
+  if($('#L_hex').checked)hexLayer.addTo(map);
+  pinLayer=L.layerGroup([],{pane:'pins'}).addTo(map);
+}
+
+function passes(p){
+  if(F.tier!=='all'&&p.priority_tier!==F.tier)return false;
+  if(F.spec!=='all'&&(p.specialty||'').toUpperCase()!==F.spec)return false;
+  if(F.wind&&!p.is_winddown)return false;
+  if(F.thin&&!p.thin_local_supply)return false;
+  return true;
+}
+function applyFilter(){
+  pinLayer.clearLayers();curFiltered=[];
+  if($('#L_pins').checked)for(const f of curPins){
+    const p=f.properties;if(!passes(p))continue;curFiltered.push(f);
+    const ll=[f.geometry.coordinates[1],f.geometry.coordinates[0]];
+    const m=L.circleMarker(ll,{pane:'pins',radius:pinRadius(p.benes_base),fillColor:trendColor(p.winddown_status),
+      fillOpacity:.9,color:p.thin_local_supply?gv('--warn'):'rgba(255,255,255,.75)',weight:p.thin_local_supply?2.4:1.1});
+    m.on('click',()=>openDetail(p,ll));
+    m.bindTooltip(`${p.name} · ${p.city}`,{direction:'top',offset:[0,-4]});
+    pinLayer.addLayer(m);
+  }
+  $('#visCount').textContent=curFiltered.length;
+}
+
+/* detail card */
+function openDetail(p,ll){
+  const tm={A:['crit','Tier A · Imminent desert'],B:['warn','Tier B · Active watch'],C:['flat','Tier C · Monitor']};
+  const[tc,tl]=tm[p.priority_tier]||['flat','—'];
+  const sp=p.is_winddown?'<span class="pill crit">● Actively winding down</span>'
+    :(p.winddown_status==='stable_or_growing'?'<span class="pill ok">● Stable / growing</span>':'<span class="pill flat">○ No Medicare signal</span>');
+  $('#detail').innerHTML=`<div class="dhd"><button class="closex" onclick="closeDetail()">×</button>
+    <span class="tier pill ${tc}">${tl}</span><h2>${p.name||'Unknown'}</h2>
+    <div class="sub">${p.credential||''} · ${p.specialty} · NPI ${p.npi}</div></div>
+   <div class="dbody"><div>${sp}</div>
+    <dl class="kv">
+      <dt>Est. age</dt><dd>${p.est_age!=null?p.est_age+' (grad '+p.grad_year+')':'—'}</dd>
+      <dt>Practice</dt><dd>${titlecase((p.practice_type||'').replace(/_/g,' '))}</dd>
+      <dt>Facility</dt><dd>${p.facility||'—'}</dd>
+      <dt>County</dt><dd>${p.county||'—'}</dd>
+      <dt>Address</dt><dd>${p.address} <button class="copyaddr" onclick="copyText(this.dataset.a,'Address copied')" data-a="${(p.address||'').replace(/"/g,'&quot;')}">copy</button></dd>
+      <dt>Phone</dt><dd>${p.phone||'—'}</dd></dl>
+    <div class="card"><h3>2-year Medicare volume (Layer 2)</h3>${trendBlock(p)}</div>
+    <div class="card"><h3>Local supply · ${4}-mile catchment (Layer 3)</h3>
+      <div class="supply">
+        <div class="s"><div class="n tnum">${fmt(p.nearby_active_pcps)}</div><div class="l">PCPs within 4 mi</div></div>
+        <div class="s"><div class="n tnum">${p.pcps_per_10k!=null?p.pcps_per_10k:'—'}</div><div class="l">PCPs / 10k</div></div>
+        <div class="s"><div class="n tnum">${p.catchment_population?fmt(p.catchment_population):'—'}</div><div class="l">Catchment pop.</div></div></div>
+      <div class="note" style="margin-top:9px">${p.thin_local_supply?'⚠ Thin local buffer for an orphaned panel.':'Ample nearby supply.'} ${p.geo_source==='zcta_centroid'?'ZIP-centroid location.':''}</div></div>
+    <div class="note">Per-capita ratios approximate in rural areas; count is exact.</div></div>`;
+  $('#detail').classList.add('open');
+  if(ll)map.panTo(ll,{animate:true});
+}
+function trendBlock(p){
+  const b=p.benes_base,l=p.benes_latest;
+  if(b==null&&l==null)return '<div class="note">No Medicare volume on file (commercial-heavy or suppressed &lt;11).</div>';
+  const mx=Math.max(b||0,l||0,1),h=v=>v==null?3:Math.max(3,Math.round(v/mx*58)),pc=p.benes_pct_change;
+  const dc=pc==null?gv('--muted'):(pc<=-20?gv('--crit'):(pc<0?gv('--warn'):gv('--ok'))),sg=pc==null?'':(pc>0?'+':'');
+  return `<div class="trend"><div class="bars">
+    <div class="bar"><div class="v">${fmt(b)}</div><div class="col" style="height:${h(b)}px;background:var(--faint)"></div><div class="yr">base</div></div>
+    <div class="bar"><div class="v">${fmt(l)}</div><div class="col" style="height:${h(l)}px;background:${dc}"></div><div class="yr">latest</div></div></div>
+    <div class="delta"><div class="big" style="color:${dc}">${pc==null?'n/a':sg+pc+'%'}</div><div class="lb">unique Medicare<br>beneficiaries</div></div></div>
+    ${p.winddown_status==='dropout_no_medicare'?'<div class="note" style="margin-top:8px;color:var(--crit)">Billed in the base year, none in the latest — stopped.</div>':''}`;
+}
+function closeDetail(){$('#detail').classList.remove('open');}
+window.closeDetail=closeDetail;
+
+/* targets + sources */
+function buildTargets(){
+  $('#targets').innerHTML=SUMMARY.targets.slice(0,10).map((t,i)=>`
+    <div class="trow" data-st="${t.state}"><span class="rk">${i+1}</span><span class="nm">${t.name}</span>
+      <span class="mx"><b>${t.winddown}</b> winding down · ${t.tier_a} tier A</span></div>`).join('');
+  $('#targets').querySelectorAll('.trow').forEach(r=>r.onclick=()=>{
+    $('#stateSelect').value=r.dataset.st;selectState(r.dataset.st);
+    if(matchMedia('(max-width:860px)').matches)$('#rail').classList.remove('open');});
+}
+function buildSources(){
+  $('#sources').innerHTML=SUMMARY.sources.map(s=>`
+    <div class="srcrow"><div class="nm">${s.name}</div>
+      <div class="meta"><span class="asof">as of ${s.modified||'—'}</span>
+      <span>${s.landing?`<a href="${s.landing}" target="_blank" rel="noopener">Page</a> `:''}${s.url?`<a href="${s.url}" target="_blank" rel="noopener">Download ↓</a>`:''}</span></div></div>`).join('');
+  const m=SUMMARY.methodology;
+  $('#methodology').innerHTML=`<b>Definitions.</b> Vulnerable: ${m.vulnerable}. Winding down: ${m.winddown}. Thin supply: ${m.thin_supply}. Shortage: ${m.shortage_county}. Targets: ${m.targets}. MVP — verify first.`;
+}
+function buildSwatches(){$('#hexSwatches').innerHTML=HEX_STOPS.map(x=>`<i style="background:${x.c}"></i>`).join('');}
+
+/* export */
+const COLS=[['priority_tier','tier'],['npi','npi'],['name','name'],['credential','cred'],['specialty','specialty'],
+  ['grad_year','grad_yr'],['est_age','est_age'],['practice_type','practice'],['address','address'],['city','city'],
+  ['state','state'],['zip','zip'],['county','county'],['phone','phone'],['benes_base','benes_base'],['benes_latest','benes_latest'],
+  ['benes_pct_change','benes_pct_chg'],['winddown_status','status'],['nearby_active_pcps','pcps_within_4mi'],['pcps_per_10k','pcps_per_10k']];
+function toCSV(){
+  const esc=v=>{v=v==null?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  return [COLS.map(c=>c[1]).join(','),...curFiltered.map(f=>COLS.map(c=>esc(f.properties[c[0]])).join(','))].join('\n');
+}
+async function copyText(t,msg,title){
+  try{await navigator.clipboard.writeText(t);toast(msg||'Copied');}
+  catch(e){$('#copytitle').textContent=title||'Copy';$('#copyta').value=t;$('#copybox').classList.add('show');$('#copyta').select();}
+}
+window.copyText=copyText;
+
+function wire(){
+  $('#stateSelect').onchange=e=>selectState(e.target.value);
+  $('#L_pins').onchange=applyFilter;
+  $('#L_hex').onchange=e=>{e.target.checked?hexLayer.addTo(map):map.removeLayer(hexLayer);};
+  $('#L_county').onchange=e=>{e.target.checked?ctyLayer.addTo(map):map.removeLayer(ctyLayer);};
+  document.querySelectorAll('#segTier button').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('#segTier button').forEach(x=>x.setAttribute('aria-pressed','false'));
+    b.setAttribute('aria-pressed','true');F.tier=b.dataset.v;applyFilter();});
+  $('#selSpec').onchange=e=>{F.spec=e.target.value;applyFilter();};
+  $('#fWind').onchange=e=>{F.wind=e.target.checked;applyFilter();};
+  $('#fThin').onchange=e=>{F.thin=e.target.checked;applyFilter();};
+  $('#exportBtn').onclick=()=>{if(!curFiltered.length){toast('No pins match');return;}
+    copyText(toCSV(),curFiltered.length+' providers copied as CSV','Vulnerable PCP list (CSV)');};
+  $('#copyPlay').onclick=()=>copyText(STATE.talking_points.map(t=>t.replace(/\*\*/g,'')).join('\n\n'),'Talking points copied','Payer talking points');
+  $('#railToggle').onclick=()=>$('#rail').classList.toggle('open');
+  $('#copyClose').onclick=()=>$('#copybox').classList.remove('show');
+  $('#themeBtn').onclick=toggleTheme;
+  document.querySelectorAll('.collap>.hd').forEach(h=>h.onclick=()=>h.parentElement.classList.toggle('closed'));
+}
+function toggleTheme(){
+  const r=document.documentElement;
+  const cur=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  r.setAttribute('data-theme',cur==='dark'?'light':'dark');
+  if(ctyLayer)ctyLayer.setStyle({color:gv('--county-line'),fillColor:gv('--county')});
+  applyFilter();
+}
+window.__dbg={open:(i=0)=>{const f=curFiltered[i];if(f)openDetail(f.properties,[f.geometry.coordinates[1],f.geometry.coordinates[0]]);}};
+boot().catch(e=>{$('#loading').innerHTML='<div class="box">Failed to load: '+e.message+'</div>';console.error(e);});
+</script>
