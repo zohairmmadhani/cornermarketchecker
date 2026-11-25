@@ -348,7 +348,7 @@ const countyStyle=f=>({color:gv('--county-line'),weight:.6,fillColor:supplyColor
 const trendColor=s=>(s==='active_winddown'||s==='dropout_no_medicare')?gv('--crit'):(s==='stable_or_growing')?gv('--ok'):gv('--unknown');
 const pinRadius=b=>b==null?4.5:Math.max(4.5,Math.min(15,Math.sqrt(b)/2.1));
 
-const map=L.map('map',{preferCanvas:true,zoomControl:false,attributionControl:false,minZoom:3,maxZoom:14,zoomSnap:.25}).setView([39,-98],4);
+const map=L.map('map',{preferCanvas:false,zoomControl:false,attributionControl:false,minZoom:3,maxZoom:14,zoomSnap:.25}).setView([39,-98],4);
 L.control.zoom({position:'bottomright'}).addTo(map);
 const paneCty=map.createPane('cty');paneCty.style.zIndex=350;
 const paneHex=map.createPane('hex');paneHex.style.zIndex=360;
