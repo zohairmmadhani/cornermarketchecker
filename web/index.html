@@ -99,6 +99,18 @@ header{display:flex;align-items:center;gap:12px;padding:9px 16px;background:var(
 .badge.fpa{background:var(--ok-wash);color:var(--ok)}
 .badge.non{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
 
+.finder{display:flex;gap:7px}
+.finder input{flex:1;min-width:0;padding:9px 11px;border-radius:9px;border:1px solid var(--line);
+  background:var(--panel);color:var(--fg);font-family:inherit;font-size:13px}
+.finder input:focus{outline:none;border-color:var(--accent)}
+.finder button{border:1px solid var(--accent);background:var(--accent);color:#fff;font-weight:600;
+  border-radius:9px;padding:0 15px;cursor:pointer;font-size:13px}
+.finder button:active{transform:translateY(1px)}
+.finder-result{font-size:12px;line-height:1.5;color:var(--muted)}
+.finder-result.show{margin-top:3px}
+.finder-result b{color:var(--fg)}
+.finder-result .err{color:var(--warn);font-weight:600}
+.finder-result .open{color:var(--accent-ink);font-weight:600}
 .lede{margin:0;font-size:13px;line-height:1.5;color:var(--fg)}
 .lede b{color:var(--crit)}
 .stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
@@ -264,6 +276,15 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
 
   <div class="body">
     <aside class="rail" id="rail">
+      <div class="block" id="finderBlock">
+        <div class="hd"><h2>📍 Clinic site finder</h2></div>
+        <div class="finder">
+          <input id="zipInput" inputmode="numeric" maxlength="5" placeholder="Enter a ZIP to scout a site for a new NP clinic…">
+          <button id="zipBtn">Go</button>
+        </div>
+        <div class="finder-result" id="zipResult"></div>
+      </div>
+
       <div class="block">
         <div class="stateline"><h2 id="stName">—</h2><span id="stBadge"></span></div>
         <p class="lede" id="lede"></p>
@@ -417,6 +438,7 @@ async function selectState(st){
 }
 
 function renderStats(st,s){
+  const zr=$('#zipResult');if(zr){zr.className='finder-result';zr.innerHTML='';}
   $('#stName').textContent=s.name;
   const bmap={active:['active','Corner market'],expansion:['expansion','Planned'],fpa:['fpa','NP can own a clinic'],non_fpa:['non','NP ownership restricted']};
   const[cls,lbl]=bmap[s.corner_status];
@@ -447,15 +469,39 @@ function renderNeed(){
 function highlightCounty(fips){
   if(!ctyLayer)return;
   if(!map.hasLayer(ctyLayer)){ctyLayer.addTo(map);$('#L_supply').checked=true;}
-  let target=null;
+  let props=null,target=null;
   ctyLayer.eachLayer(l=>{
-    if(l.feature.properties.GEOID===fips){l.setStyle({color:gv('--accent'),weight:3,fillOpacity:.78});l.bringToFront();target=l;}
+    if(l.feature.properties.GEOID===fips){l.setStyle({color:gv('--accent'),weight:3,fillOpacity:.78});l.bringToFront();target=l;props=l.feature.properties;}
     else l.setStyle(countyStyle(l.feature));
   });
   if(target)map.fitBounds(target.getBounds(),{maxZoom:9,padding:[50,50]});
   document.querySelectorAll('.needrow').forEach(r=>r.classList.toggle('active',r.dataset.fips===fips));
+  showCountyResult(props);
 }
 window.highlightCounty=highlightCounty;
+
+function showCountyResult(p){
+  const res=$('#zipResult');
+  if(!p){res.className='finder-result';res.innerHTML='';return;}
+  const per=p.supply_per_10k, short=per!=null&&per<2.9;
+  const verdict=p.winddown>0
+    ? `<span class="open">${p.winddown} doctor(s) winding down — an opening for a new NP clinic.</span>`
+    : (short?'<span class="open">Underserved — worth scouting.</span>':'Well-served today; thinner nearby markets may fit better.');
+  res.className='finder-result show';
+  res.innerHTML=`<b>${p.NAME}, ${STATE.state}</b> · ${fmt(p.active_pcps)} active PCPs · <span class="${short?'err':''}">${per??'—'} PCPs/10k</span> · ${p.vulnerable} at-risk solo PCP(s).<br>${verdict}`;
+}
+
+async function searchZip(){
+  const zip=(($('#zipInput').value||'').match(/\d/g)||[]).join('').slice(0,5);
+  const res=$('#zipResult');res.className='finder-result show';
+  if(zip.length!==5){res.innerHTML='<span class="err">Enter a 5-digit ZIP code.</span>';return;}
+  const fips=SUMMARY.zip_county[zip];
+  if(!fips){res.innerHTML=`<span class="err">ZIP ${zip} not found (no residential ZCTA on file).</span>`;return;}
+  const st=SUMMARY.fips_state[fips.slice(0,2)];
+  if(!st||!SUMMARY.states[st]){res.innerHTML=`<span class="err">ZIP ${zip} is outside the covered states.</span>`;return;}
+  if(st!==STATE.state){$('#stateSelect').value=st;await selectState(st);}
+  highlightCounty(fips);
+}
 
 function drawLayers(){
   [ctyLayer,pinLayer].forEach(l=>{if(l)map.removeLayer(l);});
@@ -580,6 +626,8 @@ function wire(){
   $('#exportBtn').onclick=()=>{if(!curFiltered.length){toast('No pins match');return;}
     copyText(toCSV(),curFiltered.length+' providers copied as CSV','Vulnerable PCP list (CSV)');};
   $('#copyPlay').onclick=()=>copyText(STATE.talking_points.map(t=>t.replace(/\*\*/g,'')).join('\n\n'),'Talking points copied','Payer talking points');
+  $('#zipBtn').onclick=searchZip;
+  $('#zipInput').onkeydown=e=>{if(e.key==='Enter')searchZip();};
   $('#railToggle').onclick=()=>$('#rail').classList.toggle('open');
   $('#copyClose').onclick=()=>$('#copybox').classList.remove('show');
   $('#themeBtn').onclick=toggleTheme;

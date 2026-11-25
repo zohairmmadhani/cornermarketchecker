@@ -232,7 +232,7 @@ def talking_points(state, sp, counties) -> list[str]:
 
 
 def all_county_supply() -> dict:
-    """county FIPS -> active PCPs per 10k residents (for the choropleth)."""
+    """county FIPS -> {active PCPs, population, per-10k} for the choropleth + search."""
     xwalk = reference.zcta_county().select("zcta", "county_fips")
     by_zip = pl.read_parquet(os.path.join(C.PROC_DIR, "active_by_zip.parquet"))
     active = (by_zip.join(xwalk, left_on="zip5", right_on="zcta", how="left")
@@ -246,8 +246,15 @@ def all_county_supply() -> dict:
         if r["county_fips"] is None:
             continue
         per10k = round(r["active"] / r["pop"] * 10000, 2) if r["pop"] > 0 else None
-        out[r["county_fips"]] = per10k
+        out[r["county_fips"]] = {"active": int(r["active"]), "pop": int(r["pop"]), "per10k": per10k}
     return out
+
+
+def zip_to_county() -> dict:
+    """zip5 -> county FIPS (national), for the clinic-site ZIP search."""
+    zc = reference.zcta_county().select("zcta", "county_fips")
+    return {r["zcta"]: r["county_fips"] for r in zc.iter_rows(named=True)
+            if r["zcta"] and r["county_fips"]}
 
 
 # --------------------------------------------------------------------------
@@ -267,8 +274,14 @@ def main() -> None:
     us_counties = json.load(open(os.path.join(C.GEO_DIR, "us_counties.geojson")))
     counties_by_state: dict[str, list] = {}
     for f in us_counties["features"]:
-        f["properties"]["supply_per_10k"] = county_supply.get(f["properties"].get("GEOID"))
-        counties_by_state.setdefault(f["properties"]["st"], []).append(f)
+        p = f["properties"]
+        cs = county_supply.get(p.get("GEOID"), {})
+        p["supply_per_10k"] = cs.get("per10k")
+        p["active_pcps"] = cs.get("active", 0)
+        p["population"] = cs.get("pop", 0)
+        p["vulnerable"] = 0   # filled per-state below
+        p["winddown"] = 0
+        counties_by_state.setdefault(p["st"], []).append(f)
 
     vint = C.read_vintage()
     states_out = {}
@@ -283,6 +296,13 @@ def main() -> None:
                            "active_pcps", "population", "pcp_per_10k", "medicare_at_risk")
                    .head(12).to_dicts())
         tps = talking_points(st, sp, cty)
+        # enrich this state's county features with vulnerable/winddown counts
+        rb = {r["county_fips"]: r for r in cty.iter_rows(named=True)}
+        for f in counties_by_state.get(st, []):
+            r = rb.get(f["properties"].get("GEOID"))
+            if r:
+                f["properties"]["vulnerable"] = int(r["vulnerable"])
+                f["properties"]["winddown"] = int(r["winddown"])
         # bbox
         la = sp["lat"].to_list(); lo = sp["lon"].to_list()
         bbox = [min(lo), min(la), max(lo), max(la)]
@@ -379,6 +399,8 @@ def main() -> None:
         "national": national,
         "states": states_out,
         "state_list": sorted(present_states, key=lambda s: C.STATE_NAMES[s]),
+        "zip_county": zip_to_county(),
+        "fips_state": C.STATE_FIPS,
         "targets": targets,
         "fpa_states": sorted(C.FPA_STATES),
         "corner_active": sorted(C.CORNER_ACTIVE), "corner_expansion": sorted(C.CORNER_EXPANSION),
