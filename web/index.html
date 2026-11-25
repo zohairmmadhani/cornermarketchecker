@@ -309,7 +309,7 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
     <main class="mapwrap">
       <div id="map"></div>
       <div class="mapctl tr">
-        <div class="countpill"><b id="visCount">0</b> pins · <span id="asof"></span></div>
+        <div class="countpill"><b id="visCount">0</b> solo PCPs shown · <span id="asof"></span></div>
       </div>
       <div class="legendbox">
         <div><b>Dots</b> = solo doctors · size = panel · color = Medicare patient loss</div>
@@ -338,6 +338,7 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
 const DATA='data/';
 const $=s=>document.querySelector(s);
 const fmt=n=>n==null?'—':Number(n).toLocaleString('en-US');
+const plu=(n,w)=>`${fmt(n)} ${w}${Number(n)===1?'':'s'}`;  // "1 PCP" / "17 PCPs"
 const titlecase=s=>(s||'').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
 const gv=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);};
@@ -394,7 +395,7 @@ function buildSelect(){
     if(!sts.length)continue;
     const og=document.createElement('optgroup');og.label=label;
     for(const st of sts){const o=document.createElement('option');o.value=st;
-      o.textContent=`${S[st].name} — ${S[st].vulnerable} at risk`;og.appendChild(o);}
+      o.textContent=`${S[st].name} — ${S[st].vulnerable} PCPs at risk`;og.appendChild(o);}
     sel.appendChild(og);
   }
 }
@@ -435,20 +436,20 @@ function renderView(){
   if(v==='all'||!STATE.payers||!STATE.payers.length){
     const dy=SUMMARY.data_years||{};
     stats=`
-      <div class="stat crit"><div class="n tnum">${s.winddown}</div><div class="l">Winding down</div></div>
-      <div class="stat accent"><div class="n tnum">~${Math.round(s.est_patients_at_risk/1000)}k</div><div class="l">Patients need a PCP</div></div>
-      <div class="stat warn"><div class="n tnum">${s.steep_stopped}</div><div class="l">Steep drop or stopped</div></div>
-      <div class="stat"><div class="n tnum">${s.vulnerable}</div><div class="l">Solo PCPs, age 66+</div></div>`;
+      <div class="stat crit"><div class="n tnum">${s.winddown}</div><div class="l">solo PCPs winding down</div></div>
+      <div class="stat accent"><div class="n tnum">~${Math.round(s.est_patients_at_risk/1000)}k</div><div class="l">patients losing their PCP</div></div>
+      <div class="stat warn"><div class="n tnum">${s.steep_stopped}</div><div class="l">PCPs: steep drop or stopped billing</div></div>
+      <div class="stat"><div class="n tnum">${s.vulnerable}</div><div class="l">solo PCPs, age 66+</div></div>`;
     ec=`<div class="footnote" style="margin-top:4px"><b>Winding down</b> = a solo doctor's unique fee-for-service Medicare patients fell ≥20% ${dy.partb_base||''}→${dy.partb_latest||''} <i>faster than their county's PCP market</i>, or they stopped billing. <b>Solo</b> = sole owner or ≤2-doc practice, est. age 66+. ${s.provider_specific} of the ${s.winddown} show a provider-specific decline (steeper than the local market).</div>`;
   }else{
     const p=STATE.payers[+v];
     stats=`
-      <div class="stat accent"><div class="n tnum">${fmt(p.state_members)}</div><div class="l">${p.name} MA members</div></div>
-      <div class="stat crit"><div class="n tnum">${fmt(p.exposed_members)}</div><div class="l">In retiring-PCP counties</div></div>
-      <div class="stat warn"><div class="n tnum">${p.exposed_counties.length}</div><div class="l">Exposed counties</div></div>`;
+      <div class="stat accent"><div class="n tnum">${fmt(p.state_members)}</div><div class="l">${p.name} MA members (people)</div></div>
+      <div class="stat crit"><div class="n tnum">${fmt(p.exposed_members)}</div><div class="l">MA members in retiring-PCP counties</div></div>
+      <div class="stat warn"><div class="n tnum">${p.exposed_counties.length}</div><div class="l">exposed counties</div></div>`;
     if(p.exposed_counties.length){
       ec=`<div class="footnote" style="margin:4px 0 3px">${p.name}'s most exposed counties — click to view:</div>`
-        +p.exposed_counties.map(c=>`<div class="ec-row" onclick="highlightCounty('${c.fips}')"><b>${c.county.replace(' County','')}</b> · ${c.members.toLocaleString()} members (${c.share}% of MA) · ${c.winddown} retiring</div>`).join('');
+        +p.exposed_counties.map(c=>`<div class="ec-row" onclick="highlightCounty('${c.fips}')"><b>${c.county.replace(' County','')}</b> · ${c.members.toLocaleString()} MA members (${c.share}% of county MA) · ${plu(c.winddown,'PCP')} retiring</div>`).join('');
     }
   }
   $('#stats').innerHTML=stats;
@@ -459,10 +460,10 @@ function renderNeed(){
   $('#needtbl').innerHTML=rows.map(c=>`
     <div class="needrow" data-fips="${c.county_fips}" onclick="highlightCounty('${c.county_fips}')" title="Show ${c.county_name} on the map">
       <div class="cn">${c.county_name}</div>
-      <div class="pill-w">${c.winddown} winding down</div>
-      <div class="metrics"><span>${c.vulnerable} at-risk</span>
+      <div class="pill-w">${plu(c.winddown,'PCP')} winding down</div>
+      <div class="metrics"><span>${plu(c.vulnerable,'at-risk PCP')}</span>
         <span>${fmt(c.active_pcps)} active PCPs</span>
-        <span class="${c.pcp_per_10k!=null&&c.pcp_per_10k<2.9?'shortflag':''}">${c.pcp_per_10k??'—'}/10k</span></div></div>`).join('')
+        <span class="${c.pcp_per_10k!=null&&c.pcp_per_10k<2.9?'shortflag':''}">${c.pcp_per_10k??'—'} PCPs / 10k residents</span></div></div>`).join('')
     || '<div class="footnote">No at-risk solo PCPs recorded in this state.</div>';
 }
 function highlightCounty(fips){
@@ -481,8 +482,8 @@ window.highlightCounty=highlightCounty;
 function countyPopup(p){
   const per=p.supply_per_10k, short=per!=null&&per<2.9;
   return `<div class="cpop"><b>${p.NAME}, ${STATE.state}</b>
-    <div><span class="cp-red">${p.winddown||0}</span> solo PCP(s) winding down · ${p.vulnerable||0} at-risk (66+)</div>
-    <div>${fmt(p.active_pcps)} active PCPs · <span class="${short?'cp-warn':''}">${per!=null?per:'—'} per 10k residents</span></div></div>`;
+    <div><span class="cp-red">${plu(p.winddown||0,'solo PCP')}</span> winding down · ${plu(p.vulnerable||0,'at-risk PCP')} (age 66+)</div>
+    <div>${fmt(p.active_pcps)} active PCPs · <span class="${short?'cp-warn':''}">${per!=null?per:'—'} PCPs per 10k residents</span></div></div>`;
 }
 function drawLayers(){
   [ctyLayer,pinLayer].forEach(l=>{if(l)map.removeLayer(l);});
@@ -536,8 +537,8 @@ function openDetail(p,ll){
     <div class="card"><h3>Local supply · 4-mi catchment <span class="asof">Care Compare ${dy.care_compare||''} · pop ACS ${dy.acs||''}</span></h3>
       <div class="supply">
         <div class="s"><div class="n tnum">${fmt(p.nearby_active_pcps)}</div><div class="l">PCPs within 4 mi</div></div>
-        <div class="s"><div class="n tnum">${p.pcps_per_10k!=null?p.pcps_per_10k:'—'}</div><div class="l">PCPs / 10k</div></div>
-        <div class="s"><div class="n tnum">${p.catchment_population?fmt(p.catchment_population):'—'}</div><div class="l">Catchment pop.</div></div></div>
+        <div class="s"><div class="n tnum">${p.pcps_per_10k!=null?p.pcps_per_10k:'—'}</div><div class="l">PCPs / 10k residents</div></div>
+        <div class="s"><div class="n tnum">${p.catchment_population?fmt(p.catchment_population):'—'}</div><div class="l">residents in catchment</div></div></div>
       <div class="note" style="margin-top:9px">${p.thin_local_supply?'⚠ Thin local buffer for an orphaned panel.':'Ample nearby supply.'} ${p.geo_source==='zcta_centroid'?'ZIP-centroid location.':''}</div></div>
     <div class="note">Per-capita ratios approximate in rural areas; count is exact.</div></div>`;
   $('#detail').classList.add('open');
