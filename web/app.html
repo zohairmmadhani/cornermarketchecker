@@ -140,6 +140,19 @@ header{display:flex;align-items:center;gap:12px;padding:9px 16px;background:var(
 select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--line);
   background:var(--panel);color:var(--fg);font-family:inherit;font-size:12.5px;cursor:pointer}
 
+/* payer picker — the crux of the tool, made unmissable */
+.payerpick{display:flex;flex-direction:column;gap:6px;margin-top:6px;padding:11px;border:1.5px solid var(--accent);
+  border-radius:12px;background:var(--accent-wash)}
+.payerpick>label{font-size:11.5px;font-weight:700;color:var(--accent-ink);display:flex;align-items:center;gap:6px;cursor:pointer}
+.selwrap{position:relative}
+.selwrap::after{content:'▾';position:absolute;right:14px;top:50%;transform:translateY(-50%);pointer-events:none;
+  color:#fff;font-size:13px;font-weight:700}
+#payerSelect{appearance:none;width:100%;padding:11px 36px 11px 13px;border-radius:10px;border:none;
+  background:var(--accent);color:#fff;font-family:var(--display);font-weight:600;font-size:14px;cursor:pointer;box-shadow:var(--shadow)}
+#payerSelect:hover{filter:brightness(1.05)}
+#payerSelect option{background:var(--surface);color:var(--fg);font-weight:500}
+.payerhint{font-size:10.5px;color:var(--muted);line-height:1.45}
+
 /* county need table */
 .needtbl{display:flex;flex-direction:column;gap:3px}
 .needrow{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:7px 9px;border:1px solid var(--line);
@@ -288,7 +301,11 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
     <aside class="rail" id="rail">
       <div class="block" id="playBlock">
         <div class="stateline"><h2 id="stName">—</h2><span id="stBadge"></span></div>
-        <select class="mini" id="payerSelect" style="margin-top:2px"></select>
+        <div class="payerpick">
+          <label for="payerSelect">◉ Tailor the pitch to an insurer</label>
+          <div class="selwrap"><select id="payerSelect"></select></div>
+          <div class="payerhint">See which Medicare Advantage insurer is most exposed to these retiring PCPs — the core of the payer pitch.</div>
+        </div>
         <div class="stats" id="stats"></div>
         <div id="payerCounties"></div>
       </div>
