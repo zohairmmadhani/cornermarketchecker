@@ -5,49 +5,45 @@
 
 /* ============================================================
    Supply Cliff Radar — Corner Health GTM / payer intelligence
-   Layout: fixed app shell — header, left control rail, map,
-   slide-in provider card. Tile-free data map (CSP blocks tiles).
+   One state at a time: picker + that state's stats, payer
+   playbook, county need-ranking and expansion targets beside a
+   tile-free Leaflet data map (CSP blocks external tiles).
    ============================================================ */
 :root{
-  /* cool, clinical neutrals with a teal bias */
   --bg:#eef2f4; --surface:#ffffff; --panel:#f7f9fb; --rail:#ffffff;
   --fg:#0e1b23; --muted:#5a6b76; --faint:#8697a1; --line:#dde5ea;
-  --map-bg:#e4eaed; --county:#f0f3f5; --county-line:#c6d2d9; --context-line:#cdd8de;
-  /* brand accent (Corner Health teal-green) */
+  --map-bg:#e4eaed; --county:#eef2f4; --county-line:#c6d2d9;
   --accent:#0d9c89; --accent-ink:#0a7a6c; --accent-wash:rgba(13,156,137,.10);
-  /* semantic (independent of accent) */
   --crit:#e24a3b; --crit-wash:rgba(226,74,59,.12);
   --warn:#e2902f; --warn-wash:rgba(226,144,47,.14);
   --ok:#3c9a68; --ok-wash:rgba(60,154,104,.12);
   --unknown:#93a4ae;
-  --shadow:0 6px 24px rgba(16,36,48,.14), 0 1px 2px rgba(16,36,48,.10);
+  --shadow:0 6px 24px rgba(16,36,48,.14),0 1px 2px rgba(16,36,48,.10);
   --font:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   --display:"Space Grotesk",var(--font);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0b1216; --surface:#121d24; --panel:#0f191f; --rail:#101a20;
   --fg:#e7eef2; --muted:#93a6b1; --faint:#6a7e8a;
-  --line:#22313a; --map-bg:#0a1115; --county:#13212a; --county-line:#223742;
-  --context-line:#1c2c35;
+  --line:#22313a; --map-bg:#0a1115; --county:#111c23; --county-line:#223742;
   --accent:#1cc0ab; --accent-ink:#36d2bd; --accent-wash:rgba(28,192,171,.14);
   --crit:#f0695a; --crit-wash:rgba(240,105,90,.16);
   --warn:#eda64a; --warn-wash:rgba(237,166,74,.16);
   --ok:#52b681; --ok-wash:rgba(82,182,129,.16);
   --unknown:#5f7580;
-  --shadow:0 8px 30px rgba(0,0,0,.45), 0 1px 2px rgba(0,0,0,.4);
+  --shadow:0 8px 30px rgba(0,0,0,.45),0 1px 2px rgba(0,0,0,.4);
   color-scheme:dark;
 }}
 :root[data-theme="dark"]{
   --bg:#0b1216; --surface:#121d24; --panel:#0f191f; --rail:#101a20;
   --fg:#e7eef2; --muted:#93a6b1; --faint:#6a7e8a;
-  --line:#22313a; --map-bg:#0a1115; --county:#13212a; --county-line:#223742;
-  --context-line:#1c2c35;
+  --line:#22313a; --map-bg:#0a1115; --county:#111c23; --county-line:#223742;
   --accent:#1cc0ab; --accent-ink:#36d2bd; --accent-wash:rgba(28,192,171,.14);
   --crit:#f0695a; --crit-wash:rgba(240,105,90,.16);
   --warn:#eda64a; --warn-wash:rgba(237,166,74,.16);
   --ok:#52b681; --ok-wash:rgba(82,182,129,.16);
   --unknown:#5f7580;
-  --shadow:0 8px 30px rgba(0,0,0,.45), 0 1px 2px rgba(0,0,0,.4);
+  --shadow:0 8px 30px rgba(0,0,0,.45),0 1px 2px rgba(0,0,0,.4);
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -59,126 +55,154 @@ h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;text-wrap:balance}
 button{font-family:inherit}
 .tnum{font-variant-numeric:tabular-nums}
 
-/* ---------- header ---------- */
-header{display:flex;align-items:center;gap:14px;padding:10px 16px;
-  background:var(--surface);border-bottom:1px solid var(--line);z-index:600;flex:none}
+header{display:flex;align-items:center;gap:12px;padding:9px 16px;background:var(--surface);
+  border-bottom:1px solid var(--line);z-index:600;flex:none;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
-.logo{width:30px;height:30px;border-radius:8px;flex:none;
-  background:linear-gradient(135deg,var(--accent),var(--accent-ink));
+.logo{width:30px;height:30px;border-radius:8px;flex:none;background:linear-gradient(135deg,var(--accent),var(--accent-ink));
   display:grid;place-items:center;color:#fff;font-family:var(--display);font-weight:700;font-size:15px}
-.brand .t{min-width:0}
-.brand h1{font-size:16px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.brand p{margin:0;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand h1{font-size:15.5px;letter-spacing:-.01em;white-space:nowrap}
+.brand p{margin:0;font-size:11px;color:var(--muted);white-space:nowrap}
 .hspacer{flex:1}
-.scope{display:flex;gap:6px}
-.scope .chip{font-size:11px;font-weight:600;color:var(--accent-ink);
-  background:var(--accent-wash);border:1px solid var(--accent);border-radius:999px;padding:3px 9px}
+.statepick{display:flex;align-items:center;gap:8px}
+.statepick label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+#stateSelect{appearance:none;font-family:var(--display);font-weight:600;font-size:15px;color:var(--fg);
+  background:var(--panel);border:1.5px solid var(--accent);border-radius:10px;padding:8px 32px 8px 12px;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--accent) 50%),linear-gradient(135deg,var(--accent) 50%,transparent 50%);
+  background-position:calc(100% - 17px) 17px,calc(100% - 12px) 17px;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+.themebtn{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);
+  color:var(--fg);cursor:pointer;font-size:15px}
 .iconbtn{display:none;border:1px solid var(--line);background:var(--panel);color:var(--fg);
   border-radius:9px;padding:7px 10px;font-size:12.5px;font-weight:600;cursor:pointer}
 
-/* ---------- body split ---------- */
-.body{flex:1;display:grid;grid-template-columns:336px 1fr;min-height:0}
-.rail{background:var(--rail);border-right:1px solid var(--line);overflow-y:auto;
-  padding:14px 14px 28px;display:flex;flex-direction:column;gap:16px}
+.body{flex:1;display:grid;grid-template-columns:360px 1fr;min-height:0}
+.rail{background:var(--rail);border-right:1px solid var(--line);overflow-y:auto;padding:14px 14px 30px;
+  display:flex;flex-direction:column;gap:15px}
 .mapwrap{position:relative;min-width:0;min-height:0}
 #map{position:absolute;inset:0}
 .leaflet-container{background:var(--map-bg);font-family:var(--font)}
 .leaflet-interactive:focus{outline:none}
 
-/* ---------- rail sections ---------- */
 .block{display:flex;flex-direction:column;gap:9px}
-.block>.hd{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.block>.hd{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:default}
 .block .hd h2{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
 .block .hd .mini{font-size:11px;color:var(--faint)}
+.collap>.hd{cursor:pointer}
+.collap>.hd .chev{color:var(--faint);font-size:11px;transition:transform .15s}
+.collap.closed>.body2{display:none}
+.collap.closed>.hd .chev{transform:rotate(-90deg)}
+
+.stateline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.stateline h2{font-family:var(--display);font-size:17px;font-weight:600}
+.badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:999px}
+.badge.active{background:var(--accent-wash);color:var(--accent-ink);border:1px solid var(--accent)}
+.badge.expansion{background:var(--warn-wash);color:var(--warn)}
+.badge.fpa{background:var(--ok-wash);color:var(--ok)}
+.badge.non{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
 
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .stat{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:10px 11px}
-.stat .n{font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:-.02em;line-height:1}
-.stat .l{font-size:11px;color:var(--muted);margin-top:4px}
-.stat.wide{grid-column:1/-1;display:flex;align-items:center;gap:10px}
+.stat .n{font-family:var(--display);font-size:21px;font-weight:600;letter-spacing:-.02em;line-height:1}
+.stat .l{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.25}
 .stat.crit .n{color:var(--crit)} .stat.warn .n{color:var(--warn)} .stat.accent .n{color:var(--accent-ink)}
-.stat.wide .barwrap{flex:1;height:8px;border-radius:5px;background:var(--line);overflow:hidden;display:flex}
-.stat.wide .barwrap i{display:block;height:100%}
+.stat.wide{grid-column:1/-1}
 
 .ctl{display:flex;flex-direction:column;gap:7px}
-.toggle,.radio{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:9px;
-  border:1px solid var(--line);background:var(--panel);cursor:pointer;font-size:12.5px;user-select:none}
-.toggle:hover,.radio:hover,.seg button:hover{border-color:var(--accent)}
-.toggle input,.radio input{accent-color:var(--accent);width:15px;height:15px;margin:0;flex:none}
-.toggle .sw{margin-left:auto;font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
-.toggle .dot{width:11px;height:11px;border-radius:50%;flex:none}
+.toggle{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:9px;border:1px solid var(--line);
+  background:var(--panel);cursor:pointer;font-size:12.5px;user-select:none}
+.toggle:hover,.seg button:hover{border-color:var(--accent)}
+.toggle input{accent-color:var(--accent);width:15px;height:15px;margin:0;flex:none}
+.toggle .sw{margin-left:auto;font-size:11px;color:var(--faint)}
+.toggle .dot{width:11px;height:11px;border-radius:50%;flex:none;margin-left:auto}
 .seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
-.seg button{flex:1;border:0;background:var(--panel);color:var(--muted);padding:7px 4px;
-  font-size:12px;font-weight:600;cursor:pointer}
+.seg button{flex:1;border:0;background:var(--panel);color:var(--muted);padding:7px 4px;font-size:12px;font-weight:600;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
 .field{display:flex;flex-direction:column;gap:5px}
 .field label{font-size:11px;color:var(--muted);font-weight:600}
-select{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--line);
+select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--line);
   background:var(--panel);color:var(--fg);font-family:inherit;font-size:12.5px;cursor:pointer}
 
-/* legend */
-.legend{display:flex;flex-direction:column;gap:8px;font-size:11.5px;color:var(--muted)}
-.legend .row{display:flex;align-items:center;gap:8px}
-.legend .key{width:16px;height:16px;border-radius:50%;flex:none;border:2px solid var(--line)}
-.legend .hx{width:16px;height:12px;border-radius:3px;flex:none;opacity:.78}
-.legend .seg-note{font-size:11px;color:var(--faint);line-height:1.4}
-.swatches{display:flex;gap:3px;margin-top:2px}
-.swatches i{height:10px;flex:1;border-radius:2px}
+/* county need table */
+.needtbl{display:flex;flex-direction:column;gap:3px}
+.needrow{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:7px 9px;border:1px solid var(--line);
+  border-radius:9px;background:var(--panel);font-size:12px}
+.needrow .cn{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.needrow .metrics{display:flex;gap:8px;font-size:11px;color:var(--muted);grid-column:1/-1;margin-top:2px}
+.needrow .metrics b{color:var(--fg)}
+.needrow .pill-w{color:var(--crit);font-weight:700;font-variant-numeric:tabular-nums}
+.shortflag{color:var(--warn);font-weight:700}
 
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;width:100%;
-  padding:10px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;
-  font-weight:600;font-size:13px;cursor:pointer}
+/* playbook */
+.playbook{display:flex;flex-direction:column;gap:8px}
+.tp{border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:9px;padding:10px 11px;
+  background:var(--panel);font-size:12px;line-height:1.5}
+.tp:nth-child(1){border-left-color:var(--crit)}
+.tp:nth-child(2){border-left-color:var(--warn)}
+.tp:nth-child(3){border-left-color:var(--accent)}
+.tp strong{font-weight:700}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:10px;border-radius:10px;
+  border:1px solid var(--accent);background:var(--accent);color:#fff;font-weight:600;font-size:13px;cursor:pointer}
 .btn.ghost{background:var(--panel);color:var(--fg);border-color:var(--line)}
 .btn:active{transform:translateY(1px)}
-.src{font-size:10.5px;color:var(--faint);line-height:1.5}
-.src b{color:var(--muted);font-weight:600}
-.src a{color:var(--accent-ink)}
 
-/* ---------- map overlays ---------- */
+/* targets */
+.targets{display:flex;flex-direction:column;gap:5px}
+.trow{display:flex;align-items:center;gap:9px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;
+  background:var(--panel);cursor:pointer;font-size:12.5px}
+.trow:hover{border-color:var(--accent)}
+.trow .rk{font-family:var(--display);font-weight:700;color:var(--faint);width:16px}
+.trow .nm{font-weight:600;flex:1}
+.trow .mx{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.trow .mx b{color:var(--crit)}
+
+/* sources */
+.src{display:flex;flex-direction:column;gap:7px;font-size:11px}
+.srcrow{border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--panel)}
+.srcrow .nm{font-weight:600;color:var(--fg);font-size:11.5px}
+.srcrow .meta{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:5px}
+.srcrow .asof{color:var(--faint)}
+.srcrow a{color:var(--accent-ink);text-decoration:none;font-weight:600;border:1px solid var(--line);
+  border-radius:7px;padding:3px 8px;background:var(--surface)}
+.srcrow a:hover{border-color:var(--accent)}
+.footnote{font-size:10.5px;color:var(--faint);line-height:1.5}
+
+/* map overlays */
 .mapctl{position:absolute;z-index:500;display:flex;gap:6px}
-.mapctl.tl{top:12px;left:12px;flex-direction:column;align-items:flex-start}
 .mapctl.tr{top:12px;right:12px;flex-direction:column;align-items:flex-end}
-.zoombtns{display:flex;gap:6px;background:var(--surface);border:1px solid var(--line);
-  border-radius:10px;padding:4px;box-shadow:var(--shadow)}
-.zoombtns button{border:0;background:transparent;color:var(--fg);font-weight:600;font-size:12px;
-  padding:6px 10px;border-radius:7px;cursor:pointer}
-.zoombtns button:hover{background:var(--panel)}
-.countpill{background:var(--surface);border:1px solid var(--line);border-radius:999px;
-  padding:6px 12px;font-size:12px;box-shadow:var(--shadow);font-weight:600}
+.countpill{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px;
+  font-size:12px;box-shadow:var(--shadow);font-weight:600}
 .countpill b{color:var(--accent-ink)}
-.themebtn{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);
-  color:var(--fg);cursor:pointer;box-shadow:var(--shadow);font-size:15px}
+.legendbox{position:absolute;left:12px;bottom:12px;z-index:500;background:var(--surface);border:1px solid var(--line);
+  border-radius:11px;padding:10px 12px;box-shadow:var(--shadow);font-size:11px;max-width:240px}
+.legendbox .row{display:flex;align-items:center;gap:7px;margin-top:5px;color:var(--muted)}
+.legendbox .key{width:13px;height:13px;border-radius:50%;flex:none;border:2px solid var(--line)}
+.legendbox .swatches{display:flex;gap:2px;margin-top:4px}
+.legendbox .swatches i{height:9px;flex:1;border-radius:2px}
+.legendbox b{color:var(--fg)}
 
-/* ---------- provider detail card ---------- */
-#detail{position:absolute;top:0;right:0;bottom:0;width:372px;max-width:88vw;z-index:700;
-  background:var(--surface);border-left:1px solid var(--line);box-shadow:var(--shadow);
-  transform:translateX(102%);transition:transform .22s ease;display:flex;flex-direction:column}
+/* detail card */
+#detail{position:absolute;top:0;right:0;bottom:0;width:372px;max-width:88vw;z-index:700;background:var(--surface);
+  border-left:1px solid var(--line);box-shadow:var(--shadow);transform:translateX(102%);transition:transform .22s ease;
+  display:flex;flex-direction:column}
 #detail.open{transform:none}
 .dhd{padding:16px 16px 12px;border-bottom:1px solid var(--line);position:relative}
-.dhd .tier{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;
-  padding:3px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em}
-.dhd h2{font-size:19px;margin:9px 0 2px;letter-spacing:-.01em}
+.dhd .tier{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em}
+.dhd h2{font-size:19px;margin:9px 0 2px}
 .dhd .sub{font-size:12.5px;color:var(--muted)}
 .closex{position:absolute;top:12px;right:12px;width:30px;height:30px;border-radius:8px;border:1px solid var(--line);
   background:var(--panel);color:var(--fg);font-size:16px;cursor:pointer;line-height:1}
 .dbody{padding:14px 16px 22px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
-.kv{display:grid;grid-template-columns:118px 1fr;gap:3px 10px;font-size:12.5px}
-.kv dt{color:var(--muted)} .kv dd{margin:0;color:var(--fg);font-weight:500}
-.pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;
-  padding:3px 9px;border-radius:999px}
-.pill.crit{background:var(--crit-wash);color:var(--crit)}
-.pill.ok{background:var(--ok-wash);color:var(--ok)}
-.pill.warn{background:var(--warn-wash);color:var(--warn)}
-.pill.flat{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
+.kv{display:grid;grid-template-columns:116px 1fr;gap:3px 10px;font-size:12.5px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font-weight:500}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px}
+.pill.crit{background:var(--crit-wash);color:var(--crit)} .pill.ok{background:var(--ok-wash);color:var(--ok)}
+.pill.warn{background:var(--warn-wash);color:var(--warn)} .pill.flat{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
 .card{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel)}
 .card h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px}
 .trend{display:flex;align-items:flex-end;gap:14px}
 .trend .bars{display:flex;align-items:flex-end;gap:10px;height:62px}
 .trend .bar{display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:flex-end;height:100%}
 .trend .bar .col{width:30px;border-radius:5px 5px 0 0;min-height:3px}
-.trend .bar .yr{font-size:10.5px;color:var(--faint)}
-.trend .bar .v{font-size:12px;font-weight:700}
-.trend .delta{display:flex;flex-direction:column;gap:3px}
+.trend .bar .yr{font-size:10.5px;color:var(--faint)} .trend .bar .v{font-size:12px;font-weight:700}
 .trend .delta .big{font-family:var(--display);font-size:24px;font-weight:600}
 .trend .delta .lb{font-size:10.5px;color:var(--muted)}
 .supply{display:flex;gap:10px}
@@ -186,38 +210,33 @@ select{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border:1px 
 .supply .s .n{font-family:var(--display);font-size:19px;font-weight:600}
 .supply .s .l{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.3}
 .note{font-size:11px;color:var(--faint);line-height:1.5}
-.copyaddr{display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--accent-ink);
-  font-size:11px;font-weight:600;border:1px solid var(--line);background:var(--panel);border-radius:7px;padding:3px 7px}
+.copyaddr{display:inline-flex;gap:5px;cursor:pointer;color:var(--accent-ink);font-size:11px;font-weight:600;
+  border:1px solid var(--line);background:var(--panel);border-radius:7px;padding:2px 7px}
 
-/* loading + toast */
 #loading{position:absolute;inset:0;display:grid;place-items:center;z-index:800;background:var(--map-bg)}
 #loading .box{display:flex;flex-direction:column;align-items:center;gap:12px;color:var(--muted);font-size:13px}
-.spin{width:30px;height:30px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);
-  animation:sp .8s linear infinite}
+.spin{width:30px;height:30px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:sp .8s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.spin{animation:none}#detail{transition:none}}
-#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);z-index:900;
-  background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:12.5px;font-weight:600;
-  opacity:0;pointer-events:none;transition:all .2s ease;box-shadow:var(--shadow)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);z-index:900;background:var(--fg);
+  color:var(--bg);padding:10px 16px;border-radius:10px;font-size:12.5px;font-weight:600;opacity:0;pointer-events:none;
+  transition:all .2s ease;box-shadow:var(--shadow)}
 #toast.show{opacity:1;transform:translateX(-50%)}
-
-/* copy modal fallback */
 #copybox{position:fixed;inset:0;z-index:950;background:rgba(5,15,20,.55);display:none;place-items:center;padding:20px}
 #copybox.show{display:grid}
-#copybox .inner{background:var(--surface);border:1px solid var(--line);border-radius:14px;max-width:560px;width:100%;
+#copybox .inner{background:var(--surface);border:1px solid var(--line);border-radius:14px;max-width:580px;width:100%;
   padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)}
-#copybox textarea{width:100%;height:230px;font-family:ui-monospace,Menlo,monospace;font-size:11px;
-  border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--panel);color:var(--fg);resize:vertical}
+#copybox textarea{width:100%;height:240px;font-family:ui-monospace,Menlo,monospace;font-size:11px;border:1px solid var(--line);
+  border-radius:10px;padding:10px;background:var(--panel);color:var(--fg)}
 
-/* ---------- responsive ---------- */
-@media (max-width:820px){
+@media (max-width:860px){
   .body{grid-template-columns:1fr}
   .iconbtn{display:inline-block}
   .brand p{display:none}
-  .rail{position:absolute;top:0;bottom:0;left:0;width:310px;max-width:86vw;z-index:650;
-    transform:translateX(-102%);transition:transform .22s ease;box-shadow:var(--shadow)}
+  .rail{position:absolute;top:0;bottom:0;left:0;width:340px;max-width:88vw;z-index:650;transform:translateX(-102%);
+    transition:transform .22s ease;box-shadow:var(--shadow)}
   .rail.open{transform:none}
-  #detail{width:100%;max-width:100%;top:auto;height:74%;border-left:0;border-top:1px solid var(--line);
+  #detail{width:100%;max-width:100%;top:auto;height:76%;border-left:0;border-top:1px solid var(--line);
     border-radius:16px 16px 0 0;transform:translateY(102%)}
   #detail.open{transform:none}
 }
@@ -225,382 +244,330 @@ select{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border:1px 
 
 <div id="app">
   <header>
-    <button class="iconbtn" id="railToggle" aria-label="Filters">☰ Filters</button>
-    <div class="brand">
-      <div class="logo">C</div>
-      <div class="t">
-        <h1>Supply Cliff Radar</h1>
-        <p>Retiring solo-PCP intelligence · Corner Health GTM &amp; payer desk</p>
-      </div>
-    </div>
+    <button class="iconbtn" id="railToggle">☰</button>
+    <div class="brand"><div class="logo">C</div>
+      <div><h1>Supply Cliff Radar</h1><p>Retiring solo-PCP intelligence · Corner Health</p></div></div>
     <div class="hspacer"></div>
-    <div class="scope" id="scopeChips"></div>
-    <button class="iconbtn" id="detailToggle" style="display:none">Provider ›</button>
+    <div class="statepick">
+      <label for="stateSelect">State</label>
+      <select id="stateSelect"></select>
+    </div>
+    <button class="themebtn" id="themeBtn" title="Theme">◐</button>
   </header>
 
   <div class="body">
     <aside class="rail" id="rail">
-      <!-- stats -->
-      <div class="block" id="statsBlock">
-        <div class="hd"><h2>Supply cliff · AZ + WA</h2></div>
+      <div class="block">
+        <div class="stateline"><h2 id="stName">—</h2><span id="stBadge"></span>
+          <span class="mini" id="stNational" style="margin-left:auto"></span></div>
         <div class="stats" id="stats"></div>
       </div>
 
-      <!-- layers -->
-      <div class="block">
-        <div class="hd"><h2>Map layers</h2></div>
-        <div class="ctl" id="layers">
-          <label class="toggle"><input type="checkbox" id="L_pins" checked>
-            <span>Vulnerable solo PCPs</span><span class="sw" id="n_pins"></span></label>
-          <label class="toggle"><input type="checkbox" id="L_hex" checked>
-            <span>PCP supply density</span><span class="sw">hex</span></label>
-          <label class="toggle"><input type="checkbox" id="L_active">
-            <span>All active PCPs</span><span class="sw" id="n_active">9,770</span></label>
-          <label class="toggle"><input type="checkbox" id="L_county" checked>
-            <span>County outlines</span><span class="sw">54</span></label>
+      <div class="block collap" id="playBlock">
+        <div class="hd"><h2>⚑ Payer negotiation playbook</h2><span class="chev">▾</span></div>
+        <div class="body2" style="display:flex;flex-direction:column;gap:9px">
+          <div class="playbook" id="playbook"></div>
+          <button class="btn ghost" id="copyPlay">⧉ Copy talking points</button>
         </div>
       </div>
 
-      <!-- filters -->
-      <div class="block">
-        <div class="hd"><h2>Filter pins</h2><span class="mini" id="filtCount"></span></div>
-        <div class="ctl">
-          <div class="field"><label>State</label>
-            <div class="seg" id="segState">
-              <button data-v="all" aria-pressed="true">All</button>
-              <button data-v="AZ">AZ</button><button data-v="WA">WA</button></div></div>
+      <div class="block collap" id="needBlock">
+        <div class="hd"><h2>Counties most in need</h2><span class="chev">▾</span></div>
+        <div class="body2"><div class="needtbl" id="needtbl"></div></div>
+      </div>
+
+      <div class="block collap" id="ctlBlock">
+        <div class="hd"><h2>Map layers &amp; filters</h2><span class="chev">▾</span></div>
+        <div class="body2" style="display:flex;flex-direction:column;gap:9px">
+          <div class="ctl">
+            <label class="toggle"><input type="checkbox" id="L_pins" checked><span>Vulnerable solo PCPs</span><span class="sw" id="n_pins"></span></label>
+            <label class="toggle"><input type="checkbox" id="L_hex" checked><span>PCP supply density</span><span class="sw">hex</span></label>
+            <label class="toggle"><input type="checkbox" id="L_county" checked><span>County outlines</span></label>
+          </div>
           <div class="field"><label>Priority tier</label>
-            <div class="seg" id="segTier">
-              <button data-v="all" aria-pressed="true">All</button>
+            <div class="seg" id="segTier"><button data-v="all" aria-pressed="true">All</button>
               <button data-v="A">A</button><button data-v="B">B</button><button data-v="C">C</button></div></div>
           <div class="field"><label>Primary specialty</label>
-            <select id="selSpec">
-              <option value="all">All primary care</option>
+            <select class="mini" id="selSpec"><option value="all">All primary care</option>
               <option value="FAMILY PRACTICE">Family practice</option>
               <option value="INTERNAL MEDICINE">Internal medicine</option>
               <option value="GENERAL PRACTICE">General practice</option></select></div>
-          <label class="toggle"><input type="checkbox" id="fWind">
-            <span>Only actively winding down</span><span class="dot" style="background:var(--crit)"></span></label>
-          <label class="toggle"><input type="checkbox" id="fThin">
-            <span>Only thin local supply</span><span class="dot" style="background:var(--warn)"></span></label>
+          <label class="toggle"><input type="checkbox" id="fWind"><span>Only winding down</span><span class="dot" style="background:var(--crit)"></span></label>
+          <label class="toggle"><input type="checkbox" id="fThin"><span>Only thin local supply</span><span class="dot" style="background:var(--warn)"></span></label>
+          <button class="btn" id="exportBtn">⧉ Copy this list as CSV</button>
         </div>
       </div>
 
-      <!-- legend -->
-      <div class="block">
-        <div class="hd"><h2>Legend</h2></div>
-        <div class="legend">
-          <div class="seg-note"><b style="color:var(--fg)">Pin fill</b> = 2-yr Medicare trend</div>
-          <div class="row"><span class="key" style="background:var(--crit);border-color:var(--crit)"></span>Winding down (≥20% fewer patients, or stopped)</div>
-          <div class="row"><span class="key" style="background:var(--ok);border-color:var(--ok)"></span>Stable or growing</div>
-          <div class="row"><span class="key" style="background:var(--unknown);border-color:var(--unknown)"></span>No / suppressed Medicare data</div>
-          <div class="seg-note"><b style="color:var(--fg)">Amber ring</b> = thin local PCP supply · <b style="color:var(--fg)">size</b> = Medicare panel</div>
-          <div class="seg-note" style="margin-top:4px"><b style="color:var(--fg)">Hex shade</b> = active PCPs nearby (supply density)</div>
-          <div class="swatches" id="hexSwatches"></div>
-        </div>
+      <div class="block collap" id="targetBlock">
+        <div class="hd"><h2>Where to expand next</h2><span class="mini">FPA states</span></div>
+        <div class="body2"><div class="targets" id="targets"></div>
+          <div class="footnote" style="margin-top:6px">Full Practice Authority states (NP-ownable) ranked by winding-down solo PCPs. Click to view.</div></div>
       </div>
 
-      <!-- export -->
-      <div class="block">
-        <button class="btn" id="exportBtn">⧉ Copy filtered list as CSV</button>
-        <div class="src" style="margin-top:4px">Pastes straight into Sheets/Excel for outreach.</div>
-      </div>
-
-      <div class="src">
-        <b>Sources.</b> CMS Doctors &amp; Clinicians National Downloadable File (Care Compare, Oct 2026) ·
-        CMS Medicare Physician &amp; Other Practitioners — by Provider (2022 &amp; 2024) ·
-        U.S. Census ACS 5-yr (2022) &amp; Gazetteer · Census batch geocoder.
-        <br><b>Logic.</b> Solo = sole-proprietor or group ≤ 2. Vulnerable = grad yr ≤ 1986 (age ≈ 66+).
-        Wind-down = ≥ 20% drop in unique Medicare beneficiaries 2022→2024.
-        Thin supply = &lt; 20 active PCPs within 4 mi. MVP; verify before outreach.
+      <div class="block collap closed" id="srcBlock">
+        <div class="hd"><h2>Data sources &amp; vintage</h2><span class="chev">▾</span></div>
+        <div class="body2"><div class="src" id="sources"></div>
+          <div class="footnote" id="methodology" style="margin-top:8px"></div></div>
       </div>
     </aside>
 
     <main class="mapwrap">
       <div id="map"></div>
-      <div class="mapctl tl">
-        <div class="zoombtns">
-          <button data-z="all">Both</button><button data-z="AZ">Arizona</button><button data-z="WA">Washington</button>
-        </div>
-      </div>
       <div class="mapctl tr">
-        <button class="themebtn" id="themeBtn" title="Toggle theme">◐</button>
-        <div class="countpill"><b id="visCount">0</b> pins shown</div>
+        <div class="countpill"><b id="visCount">0</b> pins · <span id="asof"></span></div>
       </div>
-      <div id="loading"><div class="box"><div class="spin"></div><div>Loading CMS &amp; Census layers…</div></div></div>
+      <div class="legendbox">
+        <div><b>Pin fill</b> = 2-yr Medicare trend</div>
+        <div class="row"><span class="key" style="background:var(--crit);border-color:var(--crit)"></span>Winding down</div>
+        <div class="row"><span class="key" style="background:var(--ok);border-color:var(--ok)"></span>Stable / growing</div>
+        <div class="row"><span class="key" style="background:var(--unknown);border-color:var(--unknown)"></span>No Medicare data</div>
+        <div class="row" style="margin-top:6px"><b>Amber ring</b> = thin local supply · <b>size</b> = panel</div>
+        <div style="margin-top:6px"><b>Hex</b> = active PCP density</div>
+        <div class="swatches" id="hexSwatches"></div>
+      </div>
+      <div id="loading"><div class="box"><div class="spin"></div><div>Loading CMS &amp; Census data…</div></div></div>
     </main>
   </div>
 
-  <section id="detail" aria-live="polite"></section>
+  <section id="detail"></section>
 </div>
 
 <div id="toast"></div>
-<div id="copybox"><div class="inner">
-  <div style="font-weight:600">Copy this CSV</div>
-  <textarea id="copyta" readonly></textarea>
-  <button class="btn ghost" id="copyClose">Close</button>
-</div></div>
+<div id="copybox"><div class="inner"><div style="font-weight:600" id="copytitle">Copy</div>
+  <textarea id="copyta" readonly></textarea><button class="btn ghost" id="copyClose">Close</button></div></div>
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 "use strict";
 const DATA='data/';
-const fmt=n=>n==null?'—':Number(n).toLocaleString('en-US');
 const $=s=>document.querySelector(s);
-const toast=(m)=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);};
+const fmt=n=>n==null?'—':Number(n).toLocaleString('en-US');
+const titlecase=s=>(s||'').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
+const gv=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);};
+const boldmd=s=>s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
 
-/* ---- color helpers ---- */
-function trendColor(s){
-  if(s==='active_winddown'||s==='dropout_no_medicare')return getVar('--crit');
-  if(s==='stable_or_growing')return getVar('--ok');
-  return getVar('--unknown');
-}
-const HEX_STOPS=[ // active PCP count -> color (supply density)
-  {max:0,  c:'#d98a3d'}, {max:2, c:'#e6c488'}, {max:5, c:'#bcd0c6'},
-  {max:10, c:'#7fc0b2'}, {max:25,c:'#3ea796'}, {max:1e9,c:'#126b60'}
-];
-function hexColor(n){for(const s of HEX_STOPS){if(n<=s.max)return s.c;}return '#126b60';}
-function getVar(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
-function pinRadius(benes){ if(benes==null)return 4.5; return Math.max(4.5,Math.min(15,Math.sqrt(benes)/2.1)); }
+let SUMMARY=null, STATE=null, curPins=[], curFiltered=[];
+const HEX_STOPS=[{max:0,c:'#d98a3d'},{max:2,c:'#e6c488'},{max:5,c:'#bcd0c6'},{max:10,c:'#7fc0b2'},{max:25,c:'#3ea796'},{max:1e9,c:'#126b60'}];
+const hexColor=n=>{for(const s of HEX_STOPS)if(n<=s.max)return s.c;return '#126b60';};
+const trendColor=s=>(s==='active_winddown'||s==='dropout_no_medicare')?gv('--crit'):(s==='stable_or_growing')?gv('--ok'):gv('--unknown');
+const pinRadius=b=>b==null?4.5:Math.max(4.5,Math.min(15,Math.sqrt(b)/2.1));
 
-/* ---- map ---- */
-const map=L.map('map',{preferCanvas:true,zoomControl:false,attributionControl:false,
-  minZoom:4,maxZoom:14,zoomSnap:.25}).setView([40,-116],5);
+const map=L.map('map',{preferCanvas:true,zoomControl:false,attributionControl:false,minZoom:3,maxZoom:14,zoomSnap:.25}).setView([39,-98],4);
 L.control.zoom({position:'bottomright'}).addTo(map);
-const paneCtx=map.createPane('ctx');paneCtx.style.zIndex=350;
+const paneCty=map.createPane('cty');paneCty.style.zIndex=350;
 const paneHex=map.createPane('hex');paneHex.style.zIndex=360;
-const paneCty=map.createPane('cty');paneCty.style.zIndex=370;
-const paneActive=map.createPane('act');paneActive.style.zIndex=390;
 const panePins=map.createPane('pins');panePins.style.zIndex=450;
+let ctyLayer,hexLayer,pinLayer;
 
-let PINS=[], hexLayer, ctyLayer, ctxLayer, activeLayer=null, pinLayer;
-const bounds={all:null,AZ:null,WA:null};
+const F={tier:'all',spec:'all',wind:false,thin:false};
 
 async function j(f){const r=await fetch(DATA+f);if(!r.ok)throw new Error(f);return r.json();}
 
 async function boot(){
-  const [summary,ctx,cty,hex,pins]=await Promise.all([
-    j('summary.json'),j('context_states.geojson'),j('boundaries.geojson'),
-    j('saturation_hex.geojson'),j('vulnerable_pins.geojson')
-  ]);
-  buildStats(summary);buildScope(summary);buildHexSwatches();
-
-  ctxLayer=L.geoJSON(ctx,{pane:'ctx',interactive:false,style:{color:getVar('--context-line'),
-    weight:1,fill:false,dashArray:'3,4'}}).addTo(map);
-  ctyLayer=L.geoJSON(cty,{pane:'cty',interactive:false,style:{color:getVar('--county-line'),
-    weight:.8,fillColor:getVar('--county'),fillOpacity:.55}}).addTo(map);
-  hexLayer=L.geoJSON(hex,{pane:'hex',interactive:false,style:f=>({stroke:false,
-    fillColor:hexColor(f.properties.pcp_count),fillOpacity:.5})}).addTo(map);
-
-  PINS=pins.features;
-  pinLayer=L.layerGroup([],{pane:'pins'}).addTo(map);
-  computeBounds();
-  render();
-  $('#loading').style.display='none';
-  map.fitBounds(bounds.all,{padding:[30,30]});
+  SUMMARY=await j('summary.json');
+  buildSwatches();buildSelect();buildSources();buildTargets();
+  $('#asof').textContent='CMS '+(SUMMARY.sources[0]?.modified||'');
   wire();
+  const def=SUMMARY.corner_active?.[0]||SUMMARY.state_list[0];
+  $('#stateSelect').value=def;
+  await selectState(def);
+  $('#loading').style.display='none';
 }
 
-function computeBounds(){
-  const az=[],wa=[],all=[];
-  PINS.forEach(f=>{const c=[f.geometry.coordinates[1],f.geometry.coordinates[0]];
-    all.push(c);(f.properties.state==='AZ'?az:wa).push(c);});
-  bounds.all=L.latLngBounds(all);bounds.AZ=L.latLngBounds(az);bounds.WA=L.latLngBounds(wa);
+function buildSelect(){
+  const sel=$('#stateSelect');const S=SUMMARY.states;
+  const groups=[['Corner markets',s=>s.corner_status==='active'],
+    ['Planned expansion',s=>s.corner_status==='expansion'],
+    ['Full Practice Authority (NP-ownable)',s=>s.corner_status==='fpa'],
+    ['Other states',s=>s.corner_status==='non_fpa']];
+  sel.innerHTML='';
+  for(const [label,test] of groups){
+    const sts=SUMMARY.state_list.filter(st=>test(S[st]));
+    if(!sts.length)continue;
+    const og=document.createElement('optgroup');og.label=label;
+    for(const st of sts){const o=document.createElement('option');o.value=st;
+      o.textContent=`${S[st].name} — ${S[st].vulnerable} at risk`;og.appendChild(o);}
+    sel.appendChild(og);
+  }
 }
 
-/* ---- filter + render pins ---- */
-const F={state:'all',tier:'all',spec:'all',wind:false,thin:false};
-function pass(p){
-  if(F.state!=='all'&&p.state!==F.state)return false;
+async function selectState(st){
+  const s=SUMMARY.states[st];
+  STATE=await j('states/'+st+'.json');
+  curPins=STATE.pins;
+  renderStats(st,s);renderPlaybook();renderNeed();
+  drawLayers();applyFilter();
+  if(STATE.bbox){const[a,b,c,d]=STATE.bbox;map.flyToBounds([[b,a],[d,c]],{padding:[40,40],duration:.5});}
+}
+
+function renderStats(st,s){
+  $('#stName').textContent=s.name;
+  const bmap={active:['active','Corner market'],expansion:['expansion','Planned'],fpa:['fpa','NP full practice authority'],non_fpa:['non','Restricted practice']};
+  const[cls,lbl]=bmap[s.corner_status];
+  $('#stBadge').innerHTML=`<span class="badge ${cls}">${lbl}</span>`;
+  $('#stNational').textContent=`${SUMMARY.national.vulnerable_total.toLocaleString()} nationwide`;
+  $('#stats').innerHTML=`
+    <div class="stat accent"><div class="n tnum">${s.vulnerable}</div><div class="l">Vulnerable solo PCPs</div></div>
+    <div class="stat crit"><div class="n tnum">${s.winddown}</div><div class="l">Actively winding down</div></div>
+    <div class="stat warn"><div class="n tnum">${s.tier_a}</div><div class="l">Tier A — act now</div></div>
+    <div class="stat"><div class="n tnum">${fmt(s.active_pcps)}</div><div class="l">Total active PCPs</div></div>
+    <div class="stat"><div class="n tnum">${s.pcp_per_10k??'—'}</div><div class="l">PCPs / 10k residents</div></div>
+    <div class="stat"><div class="n tnum">${fmt(s.medicare_at_risk)}</div><div class="l">Medicare patients at risk</div></div>
+    <div class="stat wide"><div class="n tnum" style="font-size:15px">${s.compliance_zips} ZIP(s) &amp; ${s.shortage_counties} county(s)</div><div class="l">with 2+ winding down / primary-care shortage</div></div>`;
+  $('#n_pins').textContent=s.vulnerable;
+}
+
+function renderPlaybook(){
+  $('#playbook').innerHTML=STATE.talking_points.map(t=>`<div class="tp">${boldmd(t)}</div>`).join('');
+}
+function renderNeed(){
+  const rows=STATE.counties_need.filter(c=>c.vulnerable>0).slice(0,8);
+  $('#needtbl').innerHTML=rows.map(c=>`
+    <div class="needrow"><div class="cn">${c.county_name}</div>
+      <div class="pill-w">${c.winddown} winding down</div>
+      <div class="metrics"><span>${c.vulnerable} at-risk</span>
+        <span>${fmt(c.active_pcps)} active PCPs</span>
+        <span class="${c.pcp_per_10k!=null&&c.pcp_per_10k<2.9?'shortflag':''}">${c.pcp_per_10k??'—'}/10k</span></div></div>`).join('')
+    || '<div class="footnote">No at-risk solo PCPs recorded in this state.</div>';
+}
+
+function drawLayers(){
+  [ctyLayer,hexLayer,pinLayer].forEach(l=>{if(l)map.removeLayer(l);});
+  ctyLayer=L.geoJSON({type:'FeatureCollection',features:STATE.counties},{pane:'cty',interactive:true,
+    style:{color:gv('--county-line'),weight:.8,fillColor:gv('--county'),fillOpacity:.6},
+    onEachFeature:(f,l)=>l.bindTooltip(f.properties.NAME,{sticky:true})});
+  if($('#L_county').checked)ctyLayer.addTo(map);
+  hexLayer=L.geoJSON({type:'FeatureCollection',features:STATE.hexes},{pane:'hex',interactive:false,
+    style:f=>({stroke:false,fillColor:hexColor(f.properties.pcp_count),fillOpacity:.5})});
+  if($('#L_hex').checked)hexLayer.addTo(map);
+  pinLayer=L.layerGroup([],{pane:'pins'}).addTo(map);
+}
+
+function passes(p){
   if(F.tier!=='all'&&p.priority_tier!==F.tier)return false;
-  if(F.spec!=='all'&&p.specialty.toUpperCase()!==F.spec)return false;
+  if(F.spec!=='all'&&(p.specialty||'').toUpperCase()!==F.spec)return false;
   if(F.wind&&!p.is_winddown)return false;
   if(F.thin&&!p.thin_local_supply)return false;
   return true;
 }
-let currentFiltered=[];
-function render(){
-  pinLayer.clearLayers();
-  currentFiltered=[];
-  if(!$('#L_pins').checked){$('#visCount').textContent=0;$('#filtCount').textContent='';return;}
-  PINS.forEach(f=>{
-    const p=f.properties;if(!pass(p))return;
-    currentFiltered.push(f);
-    const latlng=[f.geometry.coordinates[1],f.geometry.coordinates[0]];
-    const m=L.circleMarker(latlng,{pane:'pins',radius:pinRadius(p.benes_base),
-      fillColor:trendColor(p.winddown_status),fillOpacity:.9,
-      color:p.thin_local_supply?getVar('--warn'):'rgba(255,255,255,.75)',
-      weight:p.thin_local_supply?2.4:1.1});
-    m.on('click',()=>openDetail(p,latlng));
-    m.on('mouseover',function(){this.setStyle({weight:3});});
-    m.on('mouseout',function(){this.setStyle({weight:p.thin_local_supply?2.4:1.1});});
-    m.bindTooltip(`${p.name} · ${titlecase(p.city)}`,{direction:'top',offset:[0,-4]});
+function applyFilter(){
+  pinLayer.clearLayers();curFiltered=[];
+  if($('#L_pins').checked)for(const f of curPins){
+    const p=f.properties;if(!passes(p))continue;curFiltered.push(f);
+    const ll=[f.geometry.coordinates[1],f.geometry.coordinates[0]];
+    const m=L.circleMarker(ll,{pane:'pins',radius:pinRadius(p.benes_base),fillColor:trendColor(p.winddown_status),
+      fillOpacity:.9,color:p.thin_local_supply?gv('--warn'):'rgba(255,255,255,.75)',weight:p.thin_local_supply?2.4:1.1});
+    m.on('click',()=>openDetail(p,ll));
+    m.bindTooltip(`${p.name} · ${p.city}`,{direction:'top',offset:[0,-4]});
     pinLayer.addLayer(m);
-  });
-  $('#visCount').textContent=currentFiltered.length;
-  $('#filtCount').textContent=currentFiltered.length+' of '+PINS.length;
-  $('#n_pins').textContent=PINS.length;
-}
-const titlecase=s=>(s||'').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
-
-/* ---- active PCP lazy layer ---- */
-async function toggleActive(on){
-  if(on){
-    if(!activeLayer){
-      toast('Loading 9,770 active PCPs…');
-      const d=await j('active_pcps.geojson');
-      activeLayer=L.geoJSON(d,{pane:'act',pointToLayer:(f,ll)=>L.circleMarker(ll,{pane:'act',
-        radius:2.3,fillColor:getVar('--accent'),fillOpacity:.32,stroke:false})});
-    }
-    activeLayer.addTo(map);
-  } else if(activeLayer){map.removeLayer(activeLayer);}
+  }
+  $('#visCount').textContent=curFiltered.length;
 }
 
-/* ---- detail card ---- */
-function openDetail(p,latlng){
-  const tierMap={A:['crit','Tier A · Imminent desert'],B:['warn','Tier B · Active watch'],C:['flat','Tier C · Monitor']};
-  const [tc,tl]=tierMap[p.priority_tier]||['flat','—'];
-  const statusPill=p.is_winddown
-    ?`<span class="pill crit">● Actively winding down</span>`
-    :(p.winddown_status==='stable_or_growing'?`<span class="pill ok">● Stable / growing</span>`
-      :`<span class="pill flat">○ No Medicare signal</span>`);
-  const d=$('#detail');
-  d.innerHTML=`
-    <div class="dhd">
-      <button class="closex" onclick="closeDetail()" aria-label="Close">×</button>
-      <span class="tier pill ${tc}">${tl}</span>
-      <h2>${p.name||'Unknown provider'}</h2>
-      <div class="sub">${p.credential||''} · ${titlecase(p.specialty)} · NPI ${p.npi}</div>
-    </div>
-    <div class="dbody">
-      <div>${statusPill}</div>
-      <dl class="kv">
-        <dt>Est. age</dt><dd>${p.est_age!=null?p.est_age+' (grad '+p.grad_year+')':'—'}</dd>
-        <dt>Practice</dt><dd>${titlecase((p.practice_type||'').replace(/_/g,' '))}</dd>
-        <dt>Facility</dt><dd>${p.facility||'—'}</dd>
-        <dt>Address</dt><dd>${titlecase(p.address)} <button class="copyaddr" onclick="copyText(this.dataset.a,'Address copied')" data-a="${(p.address||'').replace(/"/g,'&quot;')}">copy</button></dd>
-        <dt>Phone</dt><dd>${p.phone||'—'}</dd>
-      </dl>
-
-      <div class="card">
-        <h3>2-year Medicare volume (Layer 2)</h3>
-        ${trendBlock(p)}
-      </div>
-
-      <div class="card">
-        <h3>Local supply · 4-mile catchment (Layer 3)</h3>
-        <div class="supply">
-          <div class="s"><div class="n tnum">${fmt(p.nearby_active_pcps)}</div><div class="l">Active PCPs within 4 mi</div></div>
-          <div class="s"><div class="n tnum">${p.pcps_per_10k!=null?p.pcps_per_10k:'—'}</div><div class="l">PCPs / 10k residents</div></div>
-          <div class="s"><div class="n tnum">${p.catchment_population?fmt(p.catchment_population):'—'}</div><div class="l">Catchment population</div></div>
-        </div>
-        <div class="note" style="margin-top:9px">${p.thin_local_supply?'⚠ Thin local buffer — few nearby PCPs to absorb an orphaned panel.':'Ample nearby PCP supply.'} ${p.geo_source==='zcta_centroid'?'Location approximated to ZIP centroid.':''}</div>
-      </div>
-      <div class="note">Per-capita ratios use ACS ZCTA centroids and are approximate in sparse rural areas; the nearby-PCP count is exact.</div>
-    </div>`;
-  d.classList.add('open');
-  if(latlng)map.panTo(latlng,{animate:true});
+/* detail card */
+function openDetail(p,ll){
+  const tm={A:['crit','Tier A · Imminent desert'],B:['warn','Tier B · Active watch'],C:['flat','Tier C · Monitor']};
+  const[tc,tl]=tm[p.priority_tier]||['flat','—'];
+  const sp=p.is_winddown?'<span class="pill crit">● Actively winding down</span>'
+    :(p.winddown_status==='stable_or_growing'?'<span class="pill ok">● Stable / growing</span>':'<span class="pill flat">○ No Medicare signal</span>');
+  $('#detail').innerHTML=`<div class="dhd"><button class="closex" onclick="closeDetail()">×</button>
+    <span class="tier pill ${tc}">${tl}</span><h2>${p.name||'Unknown'}</h2>
+    <div class="sub">${p.credential||''} · ${p.specialty} · NPI ${p.npi}</div></div>
+   <div class="dbody"><div>${sp}</div>
+    <dl class="kv">
+      <dt>Est. age</dt><dd>${p.est_age!=null?p.est_age+' (grad '+p.grad_year+')':'—'}</dd>
+      <dt>Practice</dt><dd>${titlecase((p.practice_type||'').replace(/_/g,' '))}</dd>
+      <dt>Facility</dt><dd>${p.facility||'—'}</dd>
+      <dt>County</dt><dd>${p.county||'—'}</dd>
+      <dt>Address</dt><dd>${p.address} <button class="copyaddr" onclick="copyText(this.dataset.a,'Address copied')" data-a="${(p.address||'').replace(/"/g,'&quot;')}">copy</button></dd>
+      <dt>Phone</dt><dd>${p.phone||'—'}</dd></dl>
+    <div class="card"><h3>2-year Medicare volume (Layer 2)</h3>${trendBlock(p)}</div>
+    <div class="card"><h3>Local supply · ${4}-mile catchment (Layer 3)</h3>
+      <div class="supply">
+        <div class="s"><div class="n tnum">${fmt(p.nearby_active_pcps)}</div><div class="l">Active PCPs within 4 mi</div></div>
+        <div class="s"><div class="n tnum">${p.pcps_per_10k!=null?p.pcps_per_10k:'—'}</div><div class="l">PCPs / 10k residents</div></div>
+        <div class="s"><div class="n tnum">${p.catchment_population?fmt(p.catchment_population):'—'}</div><div class="l">Catchment population</div></div></div>
+      <div class="note" style="margin-top:9px">${p.thin_local_supply?'⚠ Thin local buffer — little nearby capacity to absorb an orphaned panel.':'Ample nearby PCP supply.'} ${p.geo_source==='zcta_centroid'?'Location approximated to ZIP centroid.':''}</div></div>
+    <div class="note">Per-capita ratios use ACS ZCTA centroids (approximate in sparse rural areas); the nearby-PCP count is exact.</div></div>`;
+  $('#detail').classList.add('open');
+  if(ll)map.panTo(ll,{animate:true});
 }
 function trendBlock(p){
   const b=p.benes_base,l=p.benes_latest;
-  if(b==null&&l==null) return `<div class="note">No Medicare Part B volume on file for 2022 or 2024 — likely a commercial-heavy panel or CMS-suppressed (&lt;11 beneficiaries). Treat as unknown trend.</div>`;
-  const mx=Math.max(b||0,l||0,1);
-  const h=v=>v==null?3:Math.max(3,Math.round((v/mx)*58));
-  const pc=p.benes_pct_change;
-  const dc=pc==null?getVar('--muted'):(pc<=-20?getVar('--crit'):(pc<0?getVar('--warn'):getVar('--ok')));
-  const sign=pc==null?'':(pc>0?'+':'');
-  return `<div class="trend">
-    <div class="bars">
-      <div class="bar"><div class="v">${fmt(b)}</div><div class="col" style="height:${h(b)}px;background:var(--faint)"></div><div class="yr">2022</div></div>
-      <div class="bar"><div class="v">${fmt(l)}</div><div class="col" style="height:${h(l)}px;background:${dc}"></div><div class="yr">2024</div></div>
-    </div>
-    <div class="delta">
-      <div class="big" style="color:${dc}">${pc==null?'n/a':sign+pc+'%'}</div>
-      <div class="lb">unique Medicare<br>beneficiaries</div>
-    </div></div>
-    ${p.winddown_status==='dropout_no_medicare'?'<div class="note" style="margin-top:8px;color:var(--crit)">Billed Medicare in 2022, none in 2024 — stopped or nearly stopped.</div>':''}`;
+  if(b==null&&l==null)return '<div class="note">No Medicare Part B volume on file — likely commercial-heavy or CMS-suppressed (&lt;11 beneficiaries).</div>';
+  const mx=Math.max(b||0,l||0,1),h=v=>v==null?3:Math.max(3,Math.round(v/mx*58)),pc=p.benes_pct_change;
+  const dc=pc==null?gv('--muted'):(pc<=-20?gv('--crit'):(pc<0?gv('--warn'):gv('--ok'))),sg=pc==null?'':(pc>0?'+':'');
+  return `<div class="trend"><div class="bars">
+    <div class="bar"><div class="v">${fmt(b)}</div><div class="col" style="height:${h(b)}px;background:var(--faint)"></div><div class="yr">base</div></div>
+    <div class="bar"><div class="v">${fmt(l)}</div><div class="col" style="height:${h(l)}px;background:${dc}"></div><div class="yr">latest</div></div></div>
+    <div class="delta"><div class="big" style="color:${dc}">${pc==null?'n/a':sg+pc+'%'}</div><div class="lb">unique Medicare<br>beneficiaries</div></div></div>
+    ${p.winddown_status==='dropout_no_medicare'?'<div class="note" style="margin-top:8px;color:var(--crit)">Billed Medicare in the base year, none in the latest — stopped or nearly stopped.</div>':''}`;
 }
 function closeDetail(){$('#detail').classList.remove('open');}
 window.closeDetail=closeDetail;
 
-/* ---- CSV export (clipboard; artifacts block downloads) ---- */
-const COLS=[['priority_tier','tier'],['npi','npi'],['name','name'],['credential','cred'],
-  ['specialty','specialty'],['grad_year','grad_yr'],['est_age','est_age'],['practice_type','practice'],
-  ['address','address'],['city','city'],['state','state'],['zip','zip'],['phone','phone'],
-  ['benes_base','benes_2022'],['benes_latest','benes_2024'],['benes_pct_change','benes_pct_chg'],
-  ['winddown_status','status'],['nearby_active_pcps','pcps_within_4mi'],['pcps_per_10k','pcps_per_10k']];
+/* targets + sources */
+function buildTargets(){
+  $('#targets').innerHTML=SUMMARY.targets.slice(0,10).map((t,i)=>`
+    <div class="trow" data-st="${t.state}"><span class="rk">${i+1}</span><span class="nm">${t.name}</span>
+      <span class="mx"><b>${t.winddown}</b> winding down · ${t.tier_a} tier A</span></div>`).join('');
+  $('#targets').querySelectorAll('.trow').forEach(r=>r.onclick=()=>{
+    $('#stateSelect').value=r.dataset.st;selectState(r.dataset.st);
+    if(matchMedia('(max-width:860px)').matches)$('#rail').classList.remove('open');});
+}
+function buildSources(){
+  $('#sources').innerHTML=SUMMARY.sources.map(s=>`
+    <div class="srcrow"><div class="nm">${s.name}</div>
+      <div class="meta"><span class="asof">Data as of ${s.modified||'—'}</span>
+      <span>${s.landing?`<a href="${s.landing}" target="_blank" rel="noopener">Dataset page</a> `:''}${s.url?`<a href="${s.url}" target="_blank" rel="noopener">Download ↓</a>`:''}</span></div></div>`).join('');
+  const m=SUMMARY.methodology;
+  $('#methodology').innerHTML=`<b>Definitions.</b> Vulnerable: ${m.vulnerable}. Winding down: ${m.winddown}. Thin supply: ${m.thin_supply}. Shortage county: ${m.shortage_county}. Expansion targets: ${m.targets}. MVP — verify before outreach.`;
+}
+function buildSwatches(){$('#hexSwatches').innerHTML=HEX_STOPS.map(x=>`<i style="background:${x.c}"></i>`).join('');}
+
+/* export */
+const COLS=[['priority_tier','tier'],['npi','npi'],['name','name'],['credential','cred'],['specialty','specialty'],
+  ['grad_year','grad_yr'],['est_age','est_age'],['practice_type','practice'],['address','address'],['city','city'],
+  ['state','state'],['zip','zip'],['county','county'],['phone','phone'],['benes_base','benes_base'],['benes_latest','benes_latest'],
+  ['benes_pct_change','benes_pct_chg'],['winddown_status','status'],['nearby_active_pcps','pcps_within_4mi'],['pcps_per_10k','pcps_per_10k']];
 function toCSV(){
   const esc=v=>{v=v==null?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
-  const head=COLS.map(c=>c[1]).join(',');
-  const rows=currentFiltered.map(f=>COLS.map(c=>esc(f.properties[c[0]])).join(','));
-  return [head,...rows].join('\n');
+  return [COLS.map(c=>c[1]).join(','),...curFiltered.map(f=>COLS.map(c=>esc(f.properties[c[0]])).join(','))].join('\n');
 }
-async function copyText(t,msg){
+async function copyText(t,msg,title){
   try{await navigator.clipboard.writeText(t);toast(msg||'Copied');}
-  catch(e){const cb=$('#copybox');$('#copyta').value=t;cb.classList.add('show');$('#copyta').select();}
+  catch(e){$('#copytitle').textContent=title||'Copy';$('#copyta').value=t;$('#copybox').classList.add('show');$('#copyta').select();}
 }
 window.copyText=copyText;
 
-/* ---- stats + scope ---- */
-function buildStats(s){
-  const el=$('#stats');
-  el.innerHTML=`
-    <div class="stat accent"><div class="n tnum">${s.vulnerable_total}</div><div class="l">Vulnerable solo PCPs</div></div>
-    <div class="stat crit"><div class="n tnum">${s.active_winddown}</div><div class="l">Actively winding down</div></div>
-    <div class="stat warn"><div class="n tnum">${s.tier_a}</div><div class="l">Tier A — act now</div></div>
-    <div class="stat"><div class="n tnum">${s.thin_local_supply}</div><div class="l">In thin-supply zones</div></div>
-    <div class="stat wide">
-      <div><div class="l" style="margin:0 0 5px">Tier mix (A / B / C)</div>
-      <div class="barwrap">
-        <i style="background:var(--crit);width:${s.tier_a/s.vulnerable_total*100}%"></i>
-        <i style="background:var(--warn);width:${s.tier_b/s.vulnerable_total*100}%"></i>
-        <i style="background:var(--unknown);width:${s.tier_c/s.vulnerable_total*100}%"></i>
-      </div></div>
-      <div class="tnum" style="font-weight:600;font-size:12px">${s.tier_a}/${s.tier_b}/${s.tier_c}</div>
-    </div>`;
-}
-function buildScope(s){$('#scopeChips').innerHTML=s.scope_states.map(x=>`<span class="chip">${x}</span>`).join('');}
-function buildHexSwatches(){
-  $('#hexSwatches').innerHTML=HEX_STOPS.map(x=>`<i style="background:${x.c}"></i>`).join('');
-}
-
-/* ---- wiring ---- */
 function wire(){
-  $('#L_pins').onchange=render;
+  $('#stateSelect').onchange=e=>selectState(e.target.value);
+  $('#L_pins').onchange=applyFilter;
   $('#L_hex').onchange=e=>{e.target.checked?hexLayer.addTo(map):map.removeLayer(hexLayer);};
   $('#L_county').onchange=e=>{e.target.checked?ctyLayer.addTo(map):map.removeLayer(ctyLayer);};
-  $('#L_active').onchange=e=>toggleActive(e.target.checked);
-  seg('#segState','state');seg('#segTier','tier');
-  $('#selSpec').onchange=e=>{F.spec=e.target.value;render();};
-  $('#fWind').onchange=e=>{F.wind=e.target.checked;render();};
-  $('#fThin').onchange=e=>{F.thin=e.target.checked;render();};
-  document.querySelectorAll('.zoombtns button').forEach(b=>b.onclick=()=>{
-    const z=b.dataset.z;map.flyToBounds(bounds[z]||bounds.all,{padding:[30,30],duration:.5});});
-  $('#exportBtn').onclick=()=>{ if(!currentFiltered.length){toast('No pins match the filters');return;}
-    copyText(toCSV(),currentFiltered.length+' providers copied as CSV'); };
+  document.querySelectorAll('#segTier button').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('#segTier button').forEach(x=>x.setAttribute('aria-pressed','false'));
+    b.setAttribute('aria-pressed','true');F.tier=b.dataset.v;applyFilter();});
+  $('#selSpec').onchange=e=>{F.spec=e.target.value;applyFilter();};
+  $('#fWind').onchange=e=>{F.wind=e.target.checked;applyFilter();};
+  $('#fThin').onchange=e=>{F.thin=e.target.checked;applyFilter();};
+  $('#exportBtn').onclick=()=>{if(!curFiltered.length){toast('No pins match');return;}
+    copyText(toCSV(),curFiltered.length+' providers copied as CSV','Vulnerable PCP list (CSV)');};
+  $('#copyPlay').onclick=()=>copyText(STATE.talking_points.map(t=>t.replace(/\*\*/g,'')).join('\n\n'),'Talking points copied','Payer talking points');
   $('#railToggle').onclick=()=>$('#rail').classList.toggle('open');
   $('#copyClose').onclick=()=>$('#copybox').classList.remove('show');
   $('#themeBtn').onclick=toggleTheme;
-  map.on('click',()=>{ if(window.matchMedia('(max-width:820px)').matches)$('#rail').classList.remove('open'); });
+  document.querySelectorAll('.collap>.hd').forEach(h=>h.onclick=()=>h.parentElement.classList.toggle('closed'));
 }
-function seg(sel,key){document.querySelectorAll(sel+' button').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll(sel+' button').forEach(x=>x.setAttribute('aria-pressed','false'));
-  b.setAttribute('aria-pressed','true');F[key]=b.dataset.v;render();});}
-
 function toggleTheme(){
   const r=document.documentElement;
-  const cur=r.getAttribute('data-theme')|| (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
-  const next=cur==='dark'?'light':'dark';
-  r.setAttribute('data-theme',next);
-  // recolor theme-dependent vector layers
-  if(ctxLayer)ctxLayer.setStyle({color:getVar('--context-line')});
-  if(ctyLayer)ctyLayer.setStyle({color:getVar('--county-line'),fillColor:getVar('--county')});
-  render();
+  const cur=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  r.setAttribute('data-theme',cur==='dark'?'light':'dark');
+  if(ctyLayer)ctyLayer.setStyle({color:gv('--county-line'),fillColor:gv('--county')});
+  applyFilter();
 }
-
-// Debug helper for automated render checks (harmless in production).
-window.__dbg={open:(i=0)=>{const f=currentFiltered[i];if(f)openDetail(f.properties,[f.geometry.coordinates[1],f.geometry.coordinates[0]]);}};
-
-boot().catch(e=>{$('#loading').innerHTML='<div class="box">Failed to load data: '+e.message+'</div>';console.error(e);});
+window.__dbg={open:(i=0)=>{const f=curFiltered[i];if(f)openDetail(f.properties,[f.geometry.coordinates[1],f.geometry.coordinates[0]]);}};
+boot().catch(e=>{$('#loading').innerHTML='<div class="box">Failed to load: '+e.message+'</div>';console.error(e);});
 </script>
