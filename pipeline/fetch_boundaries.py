@@ -14,7 +14,7 @@ import config as C
 def _query(url: str, offset: int, count: int, fields: str, offset_param: bool) -> dict:
     params = {
         "where": "1=1", "outFields": fields, "returnGeometry": "true",
-        "maxAllowableOffset": "0.01", "outSR": "4326", "f": "geojson",
+        "maxAllowableOffset": "0.02", "outSR": "4326", "f": "geojson",
         "resultRecordCount": count,
     }
     if offset_param:

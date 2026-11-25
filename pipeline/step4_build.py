@@ -133,6 +133,22 @@ def county_rollup(pins: pl.DataFrame, supply_pts, pop_pts) -> pl.DataFrame:
 def _title(s): return (s or "").title()
 
 
+def _round_coords(x, nd):
+    if isinstance(x, (int, float)):
+        return round(x, nd)
+    if isinstance(x, list):
+        return [_round_coords(v, nd) for v in x]
+    return x
+
+
+def _round_features(feats, nd=4):
+    for f in feats:
+        g = f.get("geometry")
+        if g and "coordinates" in g:
+            g["coordinates"] = _round_coords(g["coordinates"], nd)
+    return feats
+
+
 def pin_feature(r):
     name = f"{_title(r['first_name'])} {_title(r['last_name'])}".strip()
     return {"type": "Feature",
@@ -191,32 +207,27 @@ def talking_points(state, sp, counties) -> list[str]:
     zc = (wind.group_by(["zip5", "city"]).agg(pl.len().alias("n"))
               .filter(pl.col("n") >= 2).sort("n", descending=True))
     comp_zip_n = zc.height
-    top_zips = ", ".join(f"{_title(r['city'])} ({r['zip5']})" for r in zc.head(3).iter_rows(named=True))
+    top_zips = ", ".join(f"{_title(r['city'])} {r['zip5']}" for r in zc.head(3).iter_rows(named=True))
     short = counties.filter((pl.col("pcp_per_10k") < C.SHORTAGE_PCP_PER_10K)
                             & (pl.col("winddown") > 0)).sort("winddown", descending=True)
     top_short = ", ".join(r["county_name"] for r in short.head(3).iter_rows(named=True))
     tp = []
     tp.append(
-        f"**Network-adequacy risk:** {n_wind} solo primary-care physicians (age ~66+) in {name} are "
-        f"actively winding down" + (
-            f", and {comp_zip_n} ZIP code(s) already have 2+ winding down at once"
-            + (f" — including {top_zips}" if top_zips else "")
-            + " — each a 12-month access-gap risk under Medicare Advantage and state drive-time standards."
-            if comp_zip_n else ". Several sit in ZIPs with no nearby backup, risking drive-time compliance gaps."))
+        f"**Network adequacy:** {n_wind} solo PCPs winding down in {name}" + (
+            f"; {comp_zip_n} ZIP(s) have 2+ at once"
+            + (f" ({top_zips})" if top_zips else "")
+            + " — each a ~12-month drive-time compliance gap."
+            if comp_zip_n else ", several with no local backup — drive-time gap risk."))
     tp.append(
-        f"**Facility-fee shield:** ~{med_risk:,} Medicare patients are attached to these winding-down "
-        f"practices today. If they drift into hospital-owned clinics, the plan pays {C.FACILITY_FEE_MULTIPLIER} "
-        f"more per identical visit via facility fees. Corner NPs capture those panels at {C.NP_RATE_RANGE} "
-        f"of the physician fee schedule — a direct cost-containment shield.")
+        f"**Facility-fee shield:** ~{med_risk:,} Medicare patients at risk. In hospital clinics they cost "
+        f"{C.FACILITY_FEE_MULTIPLIER} more (facility fees); Corner NPs hold them at {C.NP_RATE_RANGE} of physician rates.")
     if top_short:
         tp.append(
-            f"**Auto-assignment targets:** the thinnest-supply counties — {top_short} — are where "
-            f"unattributed members and HEDIS gaps will concentrate as these doctors exit. They are prime "
-            f"spots to auto-assign members or co-fund outreach to a new Corner clinic.")
+            f"**Auto-assignment:** thinnest-supply counties ({top_short}) — where unattributed members and "
+            f"HEDIS gaps concentrate. Prime for auto-assignment or co-funded outreach.")
     tp.append(
-        f"**Immediate ask:** fast-track credentialing for Corner in {name}; {tier_a} practice(s) are the "
-        f"highest priority (winding down with little local backup) and ~{n_vuln*C.EST_PANEL_SIZE:,} patients "
-        f"sit across all {n_vuln} at-risk solo practices statewide.")
+        f"**Ask:** fast-track Corner credentialing. {tier_a} Tier-A practice(s) are top priority; "
+        f"~{n_vuln*C.EST_PANEL_SIZE:,} patients across {n_vuln} at-risk practices statewide.")
     return tp
 
 
@@ -257,9 +268,9 @@ def main() -> None:
         bbox = [min(lo), min(la), max(lo), max(la)]
         state_file = {
             "state": st, "name": C.STATE_NAMES[st],
-            "pins": [pin_feature(r) for r in sp.iter_rows(named=True)],
-            "hexes": hexes,
-            "counties": counties_by_state.get(st, []),
+            "pins": _round_features([pin_feature(r) for r in sp.iter_rows(named=True)], 5),
+            "hexes": _round_features(hexes, 4),
+            "counties": _round_features(counties_by_state.get(st, []), 3),
             "talking_points": tps, "counties_need": need, "bbox": bbox,
         }
         json.dump(state_file, open(os.path.join(C.WEB_STATES, f"{st}.json"), "w"))
@@ -319,14 +330,13 @@ def main() -> None:
     summary = {
         "generated": "2026-11-25",
         "methodology": {
-            "vulnerable": f"solo (sole-proprietor or group <= {C.SOLO_MAX_GROUP}) MD/DO in "
-                          f"family/internal/general practice, med-school grad year <= {C.GRAD_YEAR_CUTOFF}",
-            "winddown": f">= {int(abs(C.DECAY_FLAG_THRESHOLD)*100)}% drop in unique Medicare beneficiaries "
+            "vulnerable": f"solo MD/DO in family/internal/general practice, grad yr ≤ {C.GRAD_YEAR_CUTOFF}",
+            "winddown": f"≥{int(abs(C.DECAY_FLAG_THRESHOLD)*100)}% fewer Medicare patients "
                         f"{vint.get('partb_base',{}).get('year','')}→{vint.get('partb_latest',{}).get('year','')}, "
-                        f"or stopped billing Medicare",
-            "thin_supply": f"< {C.THIN_SUPPLY_THRESHOLD} active PCPs within {C.CATCHMENT_RADIUS_MI} miles",
-            "shortage_county": f"< {C.SHORTAGE_PCP_PER_10K} active PCPs per 10k residents (HRSA-style)",
-            "targets": "Full Practice Authority states (AANP ~2025) ranked by winding-down solo PCPs",
+                        f"or stopped billing",
+            "thin_supply": f"<{C.THIN_SUPPLY_THRESHOLD} active PCPs within {C.CATCHMENT_RADIUS_MI} mi",
+            "shortage_county": f"<{C.SHORTAGE_PCP_PER_10K} PCPs/10k (HRSA-style)",
+            "targets": "FPA states ranked by winding-down solo PCPs",
         },
         "sources": sources,
         "national": national,

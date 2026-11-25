@@ -13,3 +13,6 @@ pipeline/__pycache__/
 # OS / editors
 .DS_Store
 .ipynb_checkpoints/
+
+# Generated standalone (regenerate with build_standalone.py)
+web/supply_cliff_radar.html

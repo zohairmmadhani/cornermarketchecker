@@ -246,7 +246,7 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
   <header>
     <button class="iconbtn" id="railToggle">☰</button>
     <div class="brand"><div class="logo">C</div>
-      <div><h1>Supply Cliff Radar</h1><p>Retiring solo-PCP intelligence · Corner Health</p></div></div>
+      <div><h1>Supply Cliff Radar</h1><p>Retiring solo PCPs · Corner Health</p></div></div>
     <div class="hspacer"></div>
     <div class="statepick">
       <label for="stateSelect">State</label>
@@ -264,7 +264,7 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
       </div>
 
       <div class="block collap" id="playBlock">
-        <div class="hd"><h2>⚑ Payer negotiation playbook</h2><span class="chev">▾</span></div>
+        <div class="hd"><h2>⚑ Payer playbook</h2><span class="chev">▾</span></div>
         <div class="body2" style="display:flex;flex-direction:column;gap:9px">
           <div class="playbook" id="playbook"></div>
           <button class="btn ghost" id="copyPlay">⧉ Copy talking points</button>
@@ -272,12 +272,12 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
       </div>
 
       <div class="block collap" id="needBlock">
-        <div class="hd"><h2>Counties most in need</h2><span class="chev">▾</span></div>
+        <div class="hd"><h2>Counties in need</h2><span class="chev">▾</span></div>
         <div class="body2"><div class="needtbl" id="needtbl"></div></div>
       </div>
 
       <div class="block collap" id="ctlBlock">
-        <div class="hd"><h2>Map layers &amp; filters</h2><span class="chev">▾</span></div>
+        <div class="hd"><h2>Layers &amp; filters</h2><span class="chev">▾</span></div>
         <div class="body2" style="display:flex;flex-direction:column;gap:9px">
           <div class="ctl">
             <label class="toggle"><input type="checkbox" id="L_pins" checked><span>Vulnerable solo PCPs</span><span class="sw" id="n_pins"></span></label>
@@ -299,13 +299,13 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
       </div>
 
       <div class="block collap" id="targetBlock">
-        <div class="hd"><h2>Where to expand next</h2><span class="mini">FPA states</span></div>
+        <div class="hd"><h2>Expand next</h2><span class="mini">FPA states</span></div>
         <div class="body2"><div class="targets" id="targets"></div>
-          <div class="footnote" style="margin-top:6px">Full Practice Authority states (NP-ownable) ranked by winding-down solo PCPs. Click to view.</div></div>
+          <div class="footnote" style="margin-top:6px">NP full-practice-authority states, ranked by winding-down PCPs. Click to view.</div></div>
       </div>
 
       <div class="block collap closed" id="srcBlock">
-        <div class="hd"><h2>Data sources &amp; vintage</h2><span class="chev">▾</span></div>
+        <div class="hd"><h2>Sources &amp; vintage</h2><span class="chev">▾</span></div>
         <div class="body2"><div class="src" id="sources"></div>
           <div class="footnote" id="methodology" style="margin-top:8px"></div></div>
       </div>
@@ -317,12 +317,12 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
         <div class="countpill"><b id="visCount">0</b> pins · <span id="asof"></span></div>
       </div>
       <div class="legendbox">
-        <div><b>Pin fill</b> = 2-yr Medicare trend</div>
+        <div><b>Pin</b> = Medicare trend</div>
         <div class="row"><span class="key" style="background:var(--crit);border-color:var(--crit)"></span>Winding down</div>
-        <div class="row"><span class="key" style="background:var(--ok);border-color:var(--ok)"></span>Stable / growing</div>
-        <div class="row"><span class="key" style="background:var(--unknown);border-color:var(--unknown)"></span>No Medicare data</div>
-        <div class="row" style="margin-top:6px"><b>Amber ring</b> = thin local supply · <b>size</b> = panel</div>
-        <div style="margin-top:6px"><b>Hex</b> = active PCP density</div>
+        <div class="row"><span class="key" style="background:var(--ok);border-color:var(--ok)"></span>Stable</div>
+        <div class="row"><span class="key" style="background:var(--unknown);border-color:var(--unknown)"></span>No data</div>
+        <div class="row" style="margin-top:6px"><b>Ring</b> = thin supply · <b>size</b> = panel</div>
+        <div style="margin-top:6px"><b>Hex</b> = PCP density</div>
         <div class="swatches" id="hexSwatches"></div>
       </div>
       <div id="loading"><div class="box"><div class="spin"></div><div>Loading CMS &amp; Census data…</div></div></div>
@@ -363,7 +363,14 @@ let ctyLayer,hexLayer,pinLayer;
 
 const F={tier:'all',spec:'all',wind:false,thin:false};
 
-async function j(f){const r=await fetch(DATA+f);if(!r.ok)throw new Error(f);return r.json();}
+async function j(f){
+  if(window.__EMBED__){
+    if(f==='summary.json')return window.__EMBED__.summary;
+    const m=f.match(/states\/(\w+)\.json/);
+    if(m&&window.__EMBED__.states[m[1]])return window.__EMBED__.states[m[1]];
+  }
+  const r=await fetch(DATA+f);if(!r.ok)throw new Error(f);return r.json();
+}
 
 async function boot(){
   SUMMARY=await j('summary.json');
@@ -410,12 +417,12 @@ function renderStats(st,s){
   $('#stNational').textContent=`${SUMMARY.national.vulnerable_total.toLocaleString()} nationwide`;
   $('#stats').innerHTML=`
     <div class="stat accent"><div class="n tnum">${s.vulnerable}</div><div class="l">Vulnerable solo PCPs</div></div>
-    <div class="stat crit"><div class="n tnum">${s.winddown}</div><div class="l">Actively winding down</div></div>
-    <div class="stat warn"><div class="n tnum">${s.tier_a}</div><div class="l">Tier A — act now</div></div>
-    <div class="stat"><div class="n tnum">${fmt(s.active_pcps)}</div><div class="l">Total active PCPs</div></div>
-    <div class="stat"><div class="n tnum">${s.pcp_per_10k??'—'}</div><div class="l">PCPs / 10k residents</div></div>
-    <div class="stat"><div class="n tnum">${fmt(s.medicare_at_risk)}</div><div class="l">Medicare patients at risk</div></div>
-    <div class="stat wide"><div class="n tnum" style="font-size:15px">${s.compliance_zips} ZIP(s) &amp; ${s.shortage_counties} county(s)</div><div class="l">with 2+ winding down / primary-care shortage</div></div>`;
+    <div class="stat crit"><div class="n tnum">${s.winddown}</div><div class="l">Winding down</div></div>
+    <div class="stat warn"><div class="n tnum">${s.tier_a}</div><div class="l">Tier A · act now</div></div>
+    <div class="stat"><div class="n tnum">${fmt(s.active_pcps)}</div><div class="l">Active PCPs</div></div>
+    <div class="stat"><div class="n tnum">${s.pcp_per_10k??'—'}</div><div class="l">PCPs / 10k</div></div>
+    <div class="stat"><div class="n tnum">${fmt(s.medicare_at_risk)}</div><div class="l">Medicare at risk</div></div>
+    <div class="stat wide"><div class="n tnum" style="font-size:15px">${s.compliance_zips} ZIPs · ${s.shortage_counties} counties</div><div class="l">2+ winding down / PCP shortage</div></div>`;
   $('#n_pins').textContent=s.vulnerable;
 }
 
@@ -486,24 +493,24 @@ function openDetail(p,ll){
     <div class="card"><h3>2-year Medicare volume (Layer 2)</h3>${trendBlock(p)}</div>
     <div class="card"><h3>Local supply · ${4}-mile catchment (Layer 3)</h3>
       <div class="supply">
-        <div class="s"><div class="n tnum">${fmt(p.nearby_active_pcps)}</div><div class="l">Active PCPs within 4 mi</div></div>
-        <div class="s"><div class="n tnum">${p.pcps_per_10k!=null?p.pcps_per_10k:'—'}</div><div class="l">PCPs / 10k residents</div></div>
-        <div class="s"><div class="n tnum">${p.catchment_population?fmt(p.catchment_population):'—'}</div><div class="l">Catchment population</div></div></div>
-      <div class="note" style="margin-top:9px">${p.thin_local_supply?'⚠ Thin local buffer — little nearby capacity to absorb an orphaned panel.':'Ample nearby PCP supply.'} ${p.geo_source==='zcta_centroid'?'Location approximated to ZIP centroid.':''}</div></div>
-    <div class="note">Per-capita ratios use ACS ZCTA centroids (approximate in sparse rural areas); the nearby-PCP count is exact.</div></div>`;
+        <div class="s"><div class="n tnum">${fmt(p.nearby_active_pcps)}</div><div class="l">PCPs within 4 mi</div></div>
+        <div class="s"><div class="n tnum">${p.pcps_per_10k!=null?p.pcps_per_10k:'—'}</div><div class="l">PCPs / 10k</div></div>
+        <div class="s"><div class="n tnum">${p.catchment_population?fmt(p.catchment_population):'—'}</div><div class="l">Catchment pop.</div></div></div>
+      <div class="note" style="margin-top:9px">${p.thin_local_supply?'⚠ Thin local buffer for an orphaned panel.':'Ample nearby supply.'} ${p.geo_source==='zcta_centroid'?'ZIP-centroid location.':''}</div></div>
+    <div class="note">Per-capita ratios approximate in rural areas; count is exact.</div></div>`;
   $('#detail').classList.add('open');
   if(ll)map.panTo(ll,{animate:true});
 }
 function trendBlock(p){
   const b=p.benes_base,l=p.benes_latest;
-  if(b==null&&l==null)return '<div class="note">No Medicare Part B volume on file — likely commercial-heavy or CMS-suppressed (&lt;11 beneficiaries).</div>';
+  if(b==null&&l==null)return '<div class="note">No Medicare volume on file (commercial-heavy or suppressed &lt;11).</div>';
   const mx=Math.max(b||0,l||0,1),h=v=>v==null?3:Math.max(3,Math.round(v/mx*58)),pc=p.benes_pct_change;
   const dc=pc==null?gv('--muted'):(pc<=-20?gv('--crit'):(pc<0?gv('--warn'):gv('--ok'))),sg=pc==null?'':(pc>0?'+':'');
   return `<div class="trend"><div class="bars">
     <div class="bar"><div class="v">${fmt(b)}</div><div class="col" style="height:${h(b)}px;background:var(--faint)"></div><div class="yr">base</div></div>
     <div class="bar"><div class="v">${fmt(l)}</div><div class="col" style="height:${h(l)}px;background:${dc}"></div><div class="yr">latest</div></div></div>
     <div class="delta"><div class="big" style="color:${dc}">${pc==null?'n/a':sg+pc+'%'}</div><div class="lb">unique Medicare<br>beneficiaries</div></div></div>
-    ${p.winddown_status==='dropout_no_medicare'?'<div class="note" style="margin-top:8px;color:var(--crit)">Billed Medicare in the base year, none in the latest — stopped or nearly stopped.</div>':''}`;
+    ${p.winddown_status==='dropout_no_medicare'?'<div class="note" style="margin-top:8px;color:var(--crit)">Billed in the base year, none in the latest — stopped.</div>':''}`;
 }
 function closeDetail(){$('#detail').classList.remove('open');}
 window.closeDetail=closeDetail;
@@ -520,10 +527,10 @@ function buildTargets(){
 function buildSources(){
   $('#sources').innerHTML=SUMMARY.sources.map(s=>`
     <div class="srcrow"><div class="nm">${s.name}</div>
-      <div class="meta"><span class="asof">Data as of ${s.modified||'—'}</span>
-      <span>${s.landing?`<a href="${s.landing}" target="_blank" rel="noopener">Dataset page</a> `:''}${s.url?`<a href="${s.url}" target="_blank" rel="noopener">Download ↓</a>`:''}</span></div></div>`).join('');
+      <div class="meta"><span class="asof">as of ${s.modified||'—'}</span>
+      <span>${s.landing?`<a href="${s.landing}" target="_blank" rel="noopener">Page</a> `:''}${s.url?`<a href="${s.url}" target="_blank" rel="noopener">Download ↓</a>`:''}</span></div></div>`).join('');
   const m=SUMMARY.methodology;
-  $('#methodology').innerHTML=`<b>Definitions.</b> Vulnerable: ${m.vulnerable}. Winding down: ${m.winddown}. Thin supply: ${m.thin_supply}. Shortage county: ${m.shortage_county}. Expansion targets: ${m.targets}. MVP — verify before outreach.`;
+  $('#methodology').innerHTML=`<b>Definitions.</b> Vulnerable: ${m.vulnerable}. Winding down: ${m.winddown}. Thin supply: ${m.thin_supply}. Shortage: ${m.shortage_county}. Targets: ${m.targets}. MVP — verify first.`;
 }
 function buildSwatches(){$('#hexSwatches').innerHTML=HEX_STOPS.map(x=>`<i style="background:${x.c}"></i>`).join('');}
 

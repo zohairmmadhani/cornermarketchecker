@@ -1,11 +1,11 @@
 {
  "generated": "2026-11-25",
  "methodology": {
-  "vulnerable": "solo (sole-proprietor or group <= 2) MD/DO in family/internal/general practice, med-school grad year <= 1986",
-  "winddown": ">= 20% drop in unique Medicare beneficiaries 2022\u21922024, or stopped billing Medicare",
-  "thin_supply": "< 20 active PCPs within 4.0 miles",
-  "shortage_county": "< 2.9 active PCPs per 10k residents (HRSA-style)",
-  "targets": "Full Practice Authority states (AANP ~2025) ranked by winding-down solo PCPs"
+  "vulnerable": "solo MD/DO in family/internal/general practice, grad yr \u2264 1986",
+  "winddown": "\u226520% fewer Medicare patients 2022\u21922024, or stopped billing",
+  "thin_supply": "<20 active PCPs within 4.0 mi",
+  "shortage_county": "<2.9 PCPs/10k (HRSA-style)",
+  "targets": "FPA states ranked by winding-down solo PCPs"
  },
  "sources": [
   {
