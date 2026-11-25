@@ -232,7 +232,7 @@ def talking_points(state, sp, counties) -> list[str]:
 
 
 def all_county_supply() -> dict:
-    """county FIPS -> active PCPs per 10k residents (for the choropleth)."""
+    """county FIPS -> {active PCPs, population, per-10k} for the choropleth + search."""
     xwalk = reference.zcta_county().select("zcta", "county_fips")
     by_zip = pl.read_parquet(os.path.join(C.PROC_DIR, "active_by_zip.parquet"))
     active = (by_zip.join(xwalk, left_on="zip5", right_on="zcta", how="left")
@@ -246,7 +246,67 @@ def all_county_supply() -> dict:
         if r["county_fips"] is None:
             continue
         per10k = round(r["active"] / r["pop"] * 10000, 2) if r["pop"] > 0 else None
-        out[r["county_fips"]] = per10k
+        out[r["county_fips"]] = {"active": int(r["active"]), "pop": int(r["pop"]), "per10k": per10k}
+    return out
+
+
+def zip_to_county() -> dict:
+    """zip5 -> county FIPS (national), for the clinic-site ZIP search."""
+    zc = reference.zcta_county().select("zcta", "county_fips")
+    return {r["zcta"]: r["county_fips"] for r in zc.iter_rows(named=True)
+            if r["zcta"] and r["county_fips"]}
+
+
+FIPS2 = {v: k for k, v in C.STATE_FIPS.items()}
+
+
+def payer_talking_points(payer, st, state_members, exposed, ec) -> list[str]:
+    name = C.STATE_NAMES[st]
+    top = ", ".join(f"{c['county'].replace(' County','')} ({c['members']:,} members, "
+                    f"{c['winddown']} retiring)" for c in ec[:3])
+    tp = [f"**{payer} exposure:** ~{state_members:,} {payer} Medicare Advantage members in {name}"
+          + (f"; ~{exposed:,} live in counties where solo PCPs are retiring."
+             if exposed else "; few sit in counties with active retirements yet.")]
+    if top:
+        tp.append(f"**Most exposed:** {top}. As these PCPs exit, {payer}'s members drift to "
+                  f"hospital clinics at {C.FACILITY_FEE_MULTIPLIER} more; Corner NPs hold them at {C.NP_RATE_RANGE}.")
+    if ec:
+        tp.append(f"**Where to act for {payer}:** a Corner clinic in {ec[0]['county']} first — "
+                  f"{ec[0]['winddown']} solo PCPs winding down with {ec[0]['members']:,} of your members nearby.")
+    return tp
+
+
+def build_state_payers(st, cty, cp_all, county_ma_tot) -> list[dict]:
+    """Per major insurer in the state: members, exposed members, top exposed counties."""
+    fips2 = FIPS2.get(st)
+    if not fips2:
+        return []
+    cps = cp_all.filter(pl.col("county_fips").str.starts_with(fips2))
+    if cps.height == 0:
+        return []
+    wd = cty.select("county_fips", "county_name", "winddown")
+    cps = (cps.join(county_ma_tot, on="county_fips", how="left")
+              .join(wd, on="county_fips", how="left")
+              .with_columns(pl.col("winddown").fill_null(0)))
+    sm = (cps.group_by("payer").agg(pl.col("members").sum().alias("state_members"))
+             .sort("state_members", descending=True).head(10))
+    exp = (cps.filter(pl.col("winddown") > 0).group_by("payer")
+              .agg(pl.col("members").sum().alias("exposed")))
+    exp_map = {r["payer"]: int(r["exposed"]) for r in exp.iter_rows(named=True)}
+    out = []
+    for r in sm.iter_rows(named=True):
+        payer = r["payer"]
+        exposed = exp_map.get(payer, 0)
+        ec = (cps.filter((pl.col("payer") == payer) & (pl.col("winddown") > 0))
+                 .with_columns((pl.col("members") / pl.col("ma_total") * 100).round(1).alias("share"))
+                 .sort("members", descending=True).head(5))
+        exposed_counties = [{"county": x["county_name"], "fips": x["county_fips"],
+                             "members": int(x["members"]), "share": x["share"],
+                             "winddown": int(x["winddown"])} for x in ec.iter_rows(named=True)]
+        out.append({"name": payer, "state_members": int(r["state_members"]),
+                    "exposed_members": exposed, "exposed_counties": exposed_counties,
+                    "talking_points": payer_talking_points(payer, st, int(r["state_members"]),
+                                                           exposed, exposed_counties)})
     return out
 
 
@@ -263,12 +323,20 @@ def main() -> None:
         .group_by("state").agg(pl.col("population").sum().alias("population")))
 
     print(f"[step4] pins positioned: {pins.height:,}")
+    cp_all = pl.read_parquet(os.path.join(C.PROC_DIR, "county_payers.parquet"))
+    county_ma_tot = cp_all.group_by("county_fips").agg(pl.col("members").sum().alias("ma_total"))
     county_supply = all_county_supply()
     us_counties = json.load(open(os.path.join(C.GEO_DIR, "us_counties.geojson")))
     counties_by_state: dict[str, list] = {}
     for f in us_counties["features"]:
-        f["properties"]["supply_per_10k"] = county_supply.get(f["properties"].get("GEOID"))
-        counties_by_state.setdefault(f["properties"]["st"], []).append(f)
+        p = f["properties"]
+        cs = county_supply.get(p.get("GEOID"), {})
+        p["supply_per_10k"] = cs.get("per10k")
+        p["active_pcps"] = cs.get("active", 0)
+        p["population"] = cs.get("pop", 0)
+        p["vulnerable"] = 0   # filled per-state below
+        p["winddown"] = 0
+        counties_by_state.setdefault(p["st"], []).append(f)
 
     vint = C.read_vintage()
     states_out = {}
@@ -279,18 +347,26 @@ def main() -> None:
         cty = counties_all.filter(pl.col("state") == st)
         # per-county need list (worst first)
         need = (cty.sort(["winddown", "vulnerable"], descending=True)
-                   .select("county_name", "vulnerable", "winddown", "tier_a",
+                   .select("county_name", "county_fips", "vulnerable", "winddown", "tier_a",
                            "active_pcps", "population", "pcp_per_10k", "medicare_at_risk")
                    .head(12).to_dicts())
         tps = talking_points(st, sp, cty)
+        # enrich this state's county features with vulnerable/winddown counts
+        rb = {r["county_fips"]: r for r in cty.iter_rows(named=True)}
+        for f in counties_by_state.get(st, []):
+            r = rb.get(f["properties"].get("GEOID"))
+            if r:
+                f["properties"]["vulnerable"] = int(r["vulnerable"])
+                f["properties"]["winddown"] = int(r["winddown"])
         # bbox
         la = sp["lat"].to_list(); lo = sp["lon"].to_list()
         bbox = [min(lo), min(la), max(lo), max(la)]
+        payers = build_state_payers(st, cty, cp_all, county_ma_tot)
         state_file = {
             "state": st, "name": C.STATE_NAMES[st],
             "pins": _round_features([pin_feature(r) for r in sp.iter_rows(named=True)], 5),
             "counties": _round_features(counties_by_state.get(st, []), 3),
-            "talking_points": tps, "counties_need": need, "bbox": bbox,
+            "talking_points": tps, "payers": payers, "counties_need": need, "bbox": bbox,
         }
         json.dump(state_file, open(os.path.join(C.WEB_STATES, f"{st}.json"), "w"))
 
@@ -351,7 +427,8 @@ def main() -> None:
         "medicare_at_risk_total": int(pins.filter(pl.col("is_winddown"))["benes_latest"].fill_null(0).sum()),
         "fpa_vulnerable": int(sum(s["vulnerable"] for s in states_out.values() if s["fpa"])),
     }
-    sources = [vint.get(k) for k in ("care_compare", "partb_latest", "partb_base") if vint.get(k)]
+    sources = [vint.get(k) for k in ("care_compare", "partb_latest", "partb_base", "ma_enrollment")
+               if vint.get(k)]
     sources += [
         {"name": f"U.S. Census ACS 5-year {C.ACS_YEAR} — population (table B01003)",
          "modified": f"{C.ACS_YEAR}", "url": C.ACS_POP_URL, "landing": C.ACS_LANDING},
@@ -370,9 +447,17 @@ def main() -> None:
             "targets": "FPA states ranked by winding-down solo PCPs",
         },
         "sources": sources,
+        "data_years": {
+            "partb_base": vint.get("partb_base", {}).get("year"),
+            "partb_latest": vint.get("partb_latest", {}).get("year"),
+            "care_compare": vint.get("care_compare", {}).get("modified"),
+            "acs": C.ACS_YEAR,
+        },
         "national": national,
         "states": states_out,
         "state_list": sorted(present_states, key=lambda s: C.STATE_NAMES[s]),
+        "zip_county": zip_to_county(),
+        "fips_state": C.STATE_FIPS,
         "targets": targets,
         "fpa_states": sorted(C.FPA_STATES),
         "corner_active": sorted(C.CORNER_ACTIVE), "corner_expansion": sorted(C.CORNER_EXPANSION),

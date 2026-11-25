@@ -99,6 +99,18 @@ header{display:flex;align-items:center;gap:12px;padding:9px 16px;background:var(
 .badge.fpa{background:var(--ok-wash);color:var(--ok)}
 .badge.non{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
 
+.finder{display:flex;gap:7px}
+.finder input{flex:1;min-width:0;padding:9px 11px;border-radius:9px;border:1px solid var(--line);
+  background:var(--panel);color:var(--fg);font-family:inherit;font-size:13px}
+.finder input:focus{outline:none;border-color:var(--accent)}
+.finder button{border:1px solid var(--accent);background:var(--accent);color:#fff;font-weight:600;
+  border-radius:9px;padding:0 15px;cursor:pointer;font-size:13px}
+.finder button:active{transform:translateY(1px)}
+.finder-result{font-size:12px;line-height:1.5;color:var(--muted)}
+.finder-result.show{margin-top:3px}
+.finder-result b{color:var(--fg)}
+.finder-result .err{color:var(--warn);font-weight:600}
+.finder-result .open{color:var(--accent-ink);font-weight:600}
 .lede{margin:0;font-size:13px;line-height:1.5;color:var(--fg)}
 .lede b{color:var(--crit)}
 .stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
@@ -126,7 +138,9 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
 /* county need table */
 .needtbl{display:flex;flex-direction:column;gap:3px}
 .needrow{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:7px 9px;border:1px solid var(--line);
-  border-radius:9px;background:var(--panel);font-size:12px}
+  border-radius:9px;background:var(--panel);font-size:12px;cursor:pointer}
+.needrow:hover{border-color:var(--accent)}
+.needrow.active{border-color:var(--accent);background:var(--accent-wash)}
 .needrow .cn{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .needrow .metrics{display:flex;gap:8px;font-size:11px;color:var(--muted);grid-column:1/-1;margin-top:2px}
 .needrow .metrics b{color:var(--fg)}
@@ -141,6 +155,10 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
 .tp:nth-child(2){border-left-color:var(--warn)}
 .tp:nth-child(3){border-left-color:var(--accent)}
 .tp strong{font-weight:700}
+.ec-row{padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--panel);
+  font-size:11.5px;cursor:pointer;margin-bottom:4px;color:var(--muted)}
+.ec-row:hover{border-color:var(--accent)}
+.ec-row b{color:var(--fg)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:10px;border-radius:10px;
   border:1px solid var(--accent);background:var(--accent);color:#fff;font-weight:600;font-size:13px;cursor:pointer}
 .btn.ghost{background:var(--panel);color:var(--fg);border-color:var(--line)}
@@ -199,7 +217,10 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
 .pill.crit{background:var(--crit-wash);color:var(--crit)} .pill.ok{background:var(--ok-wash);color:var(--ok)}
 .pill.warn{background:var(--warn-wash);color:var(--warn)} .pill.flat{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
 .card{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel)}
-.card h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px}
+.card h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px;
+  display:flex;justify-content:space-between;align-items:baseline;gap:6px;flex-wrap:wrap}
+.card h3 .asof{text-transform:none;letter-spacing:0;color:var(--faint);font-weight:500;font-size:10px}
+.dhd .asof2{font-size:10.5px;color:var(--faint);margin-top:6px}
 .trend{display:flex;align-items:flex-end;gap:14px}
 .trend .bars{display:flex;align-items:flex-end;gap:10px;height:62px}
 .trend .bar{display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:flex-end;height:100%}
@@ -259,6 +280,15 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
 
   <div class="body">
     <aside class="rail" id="rail">
+      <div class="block" id="finderBlock">
+        <div class="hd"><h2>📍 Clinic site finder</h2></div>
+        <div class="finder">
+          <input id="zipInput" inputmode="numeric" maxlength="5" placeholder="Enter a ZIP to scout a site for a new NP clinic…">
+          <button id="zipBtn">Go</button>
+        </div>
+        <div class="finder-result" id="zipResult"></div>
+      </div>
+
       <div class="block">
         <div class="stateline"><h2 id="stName">—</h2><span id="stBadge"></span></div>
         <p class="lede" id="lede"></p>
@@ -268,7 +298,10 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
       <div class="block collap" id="playBlock">
         <div class="hd"><h2>⚑ Payer playbook</h2><span class="chev">▾</span></div>
         <div class="body2" style="display:flex;flex-direction:column;gap:9px">
+          <div class="field"><label>Pitch tailored for</label>
+            <select class="mini" id="payerSelect"></select></div>
           <div class="playbook" id="playbook"></div>
+          <div id="payerCounties"></div>
           <button class="btn ghost" id="copyPlay">⧉ Copy talking points</button>
         </div>
       </div>
@@ -297,12 +330,6 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
           <label class="toggle"><input type="checkbox" id="fThin"><span>Only thin local supply</span><span class="dot" style="background:var(--warn)"></span></label>
           <button class="btn" id="exportBtn">⧉ Copy this list as CSV</button>
         </div>
-      </div>
-
-      <div class="block collap" id="targetBlock">
-        <div class="hd"><h2>Expand next</h2><span class="mini">FPA states</span></div>
-        <div class="body2"><div class="targets" id="targets"></div>
-          <div class="footnote" style="margin-top:6px">NP full-practice-authority states, ranked by winding-down PCPs. Click to view.</div></div>
       </div>
 
       <div class="block collap" id="srcBlock">
@@ -376,7 +403,7 @@ async function j(f){
 
 async function boot(){
   SUMMARY=await j('summary.json');
-  buildSwatches();buildSelect();buildSources();buildTargets();
+  buildSwatches();buildSelect();buildSources();
   $('#asof').textContent='CMS '+(SUMMARY.sources[0]?.modified||'');
   wire();
   const def=SUMMARY.corner_active?.[0]||SUMMARY.state_list[0];
@@ -406,12 +433,13 @@ async function selectState(st){
   const s=SUMMARY.states[st];
   STATE=await j('states/'+st+'.json');
   curPins=STATE.pins;
-  renderStats(st,s);renderPlaybook();renderNeed();
+  renderStats(st,s);buildPayerSelect();renderPlaybook();renderNeed();
   drawLayers();applyFilter();
   if(STATE.bbox){const[a,b,c,d]=STATE.bbox;map.flyToBounds([[b,a],[d,c]],{padding:[40,40],duration:.5});}
 }
 
 function renderStats(st,s){
+  const zr=$('#zipResult');if(zr){zr.className='finder-result';zr.innerHTML='';}
   $('#stName').textContent=s.name;
   const bmap={active:['active','Corner market'],expansion:['expansion','Planned'],fpa:['fpa','NP can own a clinic'],non_fpa:['non','NP ownership restricted']};
   const[cls,lbl]=bmap[s.corner_status];
@@ -425,18 +453,74 @@ function renderStats(st,s){
   $('#n_pins').textContent=s.vulnerable;
 }
 
+function buildPayerSelect(){
+  const sel=$('#payerSelect');
+  sel.innerHTML='<option value="all">All payers · market overview</option>'
+    +(STATE.payers||[]).map((p,i)=>`<option value="${i}">${p.name} · ${p.state_members.toLocaleString()} MA members</option>`).join('');
+  sel.value='all';
+}
+let curTalkingPoints=[];
 function renderPlaybook(){
-  $('#playbook').innerHTML=STATE.talking_points.map(t=>`<div class="tp">${boldmd(t)}</div>`).join('');
+  const v=($('#payerSelect')&&$('#payerSelect').value)||'all';
+  let tps, ec='';
+  if(v==='all'||!STATE.payers){tps=STATE.talking_points;}
+  else{
+    const p=STATE.payers[+v];tps=p.talking_points;
+    if(p.exposed_counties.length){
+      ec=`<div class="footnote" style="margin:1px 0 3px">${p.name}'s most exposed counties — click to view:</div>`
+        +p.exposed_counties.map(c=>`<div class="ec-row" onclick="highlightCounty('${c.fips}')"><b>${c.county.replace(' County','')}</b> · ${c.members.toLocaleString()} members (${c.share}% of MA) · ${c.winddown} retiring</div>`).join('');
+    }
+  }
+  curTalkingPoints=tps;
+  $('#playbook').innerHTML=tps.map(t=>`<div class="tp">${boldmd(t)}</div>`).join('');
+  $('#payerCounties').innerHTML=ec;
 }
 function renderNeed(){
   const rows=STATE.counties_need.filter(c=>c.vulnerable>0).slice(0,8);
   $('#needtbl').innerHTML=rows.map(c=>`
-    <div class="needrow"><div class="cn">${c.county_name}</div>
+    <div class="needrow" data-fips="${c.county_fips}" onclick="highlightCounty('${c.county_fips}')" title="Show ${c.county_name} on the map">
+      <div class="cn">${c.county_name}</div>
       <div class="pill-w">${c.winddown} winding down</div>
       <div class="metrics"><span>${c.vulnerable} at-risk</span>
         <span>${fmt(c.active_pcps)} active PCPs</span>
         <span class="${c.pcp_per_10k!=null&&c.pcp_per_10k<2.9?'shortflag':''}">${c.pcp_per_10k??'—'}/10k</span></div></div>`).join('')
     || '<div class="footnote">No at-risk solo PCPs recorded in this state.</div>';
+}
+function highlightCounty(fips){
+  if(!ctyLayer)return;
+  if(!map.hasLayer(ctyLayer)){ctyLayer.addTo(map);$('#L_supply').checked=true;}
+  let props=null,target=null;
+  ctyLayer.eachLayer(l=>{
+    if(l.feature.properties.GEOID===fips){l.setStyle({color:gv('--accent'),weight:3,fillOpacity:.78});l.bringToFront();target=l;props=l.feature.properties;}
+    else l.setStyle(countyStyle(l.feature));
+  });
+  if(target)map.fitBounds(target.getBounds(),{maxZoom:9,padding:[50,50]});
+  document.querySelectorAll('.needrow').forEach(r=>r.classList.toggle('active',r.dataset.fips===fips));
+  showCountyResult(props);
+}
+window.highlightCounty=highlightCounty;
+
+function showCountyResult(p){
+  const res=$('#zipResult');
+  if(!p){res.className='finder-result';res.innerHTML='';return;}
+  const per=p.supply_per_10k, short=per!=null&&per<2.9;
+  const verdict=p.winddown>0
+    ? `<span class="open">${p.winddown} doctor(s) winding down — an opening for a new NP clinic.</span>`
+    : (short?'<span class="open">Underserved — worth scouting.</span>':'Well-served today; thinner nearby markets may fit better.');
+  res.className='finder-result show';
+  res.innerHTML=`<b>${p.NAME}, ${STATE.state}</b> · ${fmt(p.active_pcps)} active PCPs · <span class="${short?'err':''}">${per??'—'} PCPs/10k</span> · ${p.vulnerable} at-risk solo PCP(s).<br>${verdict}`;
+}
+
+async function searchZip(){
+  const zip=(($('#zipInput').value||'').match(/\d/g)||[]).join('').slice(0,5);
+  const res=$('#zipResult');res.className='finder-result show';
+  if(zip.length!==5){res.innerHTML='<span class="err">Enter a 5-digit ZIP code.</span>';return;}
+  const fips=SUMMARY.zip_county[zip];
+  if(!fips){res.innerHTML=`<span class="err">ZIP ${zip} not found (no residential ZCTA on file).</span>`;return;}
+  const st=SUMMARY.fips_state[fips.slice(0,2)];
+  if(!st||!SUMMARY.states[st]){res.innerHTML=`<span class="err">ZIP ${zip} is outside the covered states.</span>`;return;}
+  if(st!==STATE.state){$('#stateSelect').value=st;await selectState(st);}
+  highlightCounty(fips);
 }
 
 function drawLayers(){
@@ -474,11 +558,13 @@ function applyFilter(){
 function openDetail(p,ll){
   const tm={A:['crit','Tier A · Imminent desert'],B:['warn','Tier B · Active watch'],C:['flat','Tier C · Monitor']};
   const[tc,tl]=tm[p.priority_tier]||['flat','—'];
+  const dy=SUMMARY.data_years||{},by=dy.partb_base||'base',ly=dy.partb_latest||'latest';
   const sp=p.is_winddown?'<span class="pill crit">● Actively winding down</span>'
     :(p.winddown_status==='stable_or_growing'?'<span class="pill ok">● Stable / growing</span>':'<span class="pill flat">○ No Medicare signal</span>');
   $('#detail').innerHTML=`<div class="dhd"><button class="closex" onclick="closeDetail()">×</button>
     <span class="tier pill ${tc}">${tl}</span><h2>${p.name||'Unknown'}</h2>
-    <div class="sub">${p.credential||''} · ${p.specialty} · NPI ${p.npi}</div></div>
+    <div class="sub">${p.credential||''} · ${p.specialty} · NPI ${p.npi}</div>
+    <div class="asof2">Provider details: CMS Care Compare, as of ${dy.care_compare||'—'}</div></div>
    <div class="dbody"><div>${sp}</div>
     <dl class="kv">
       <dt>Est. age</dt><dd>${p.est_age!=null?p.est_age+' (grad '+p.grad_year+')':'—'}</dd>
@@ -487,8 +573,8 @@ function openDetail(p,ll){
       <dt>County</dt><dd>${p.county||'—'}</dd>
       <dt>Address</dt><dd>${p.address} <button class="copyaddr" onclick="copyText(this.dataset.a,'Address copied')" data-a="${(p.address||'').replace(/"/g,'&quot;')}">copy</button></dd>
       <dt>Phone</dt><dd>${p.phone||'—'}</dd></dl>
-    <div class="card"><h3>2-year Medicare volume (Layer 2)</h3>${trendBlock(p)}</div>
-    <div class="card"><h3>Local supply · ${4}-mile catchment (Layer 3)</h3>
+    <div class="card"><h3>2-year Medicare volume <span class="asof">CMS Part B · ${by} → ${ly}</span></h3>${trendBlock(p)}</div>
+    <div class="card"><h3>Local supply · 4-mi catchment <span class="asof">Care Compare ${dy.care_compare||''} · pop ACS ${dy.acs||''}</span></h3>
       <div class="supply">
         <div class="s"><div class="n tnum">${fmt(p.nearby_active_pcps)}</div><div class="l">PCPs within 4 mi</div></div>
         <div class="s"><div class="n tnum">${p.pcps_per_10k!=null?p.pcps_per_10k:'—'}</div><div class="l">PCPs / 10k</div></div>
@@ -502,12 +588,13 @@ function trendBlock(p){
   const b=p.benes_base,l=p.benes_latest;
   if(b==null&&l==null)return '<div class="note">No Medicare volume on file (commercial-heavy or suppressed &lt;11).</div>';
   const mx=Math.max(b||0,l||0,1),h=v=>v==null?3:Math.max(3,Math.round(v/mx*58)),pc=p.benes_pct_change;
+  const dy=SUMMARY.data_years||{},by=dy.partb_base||'base',ly=dy.partb_latest||'latest';
   const dc=pc==null?gv('--muted'):(pc<=-20?gv('--crit'):(pc<0?gv('--warn'):gv('--ok'))),sg=pc==null?'':(pc>0?'+':'');
   return `<div class="trend"><div class="bars">
-    <div class="bar"><div class="v">${fmt(b)}</div><div class="col" style="height:${h(b)}px;background:var(--faint)"></div><div class="yr">base</div></div>
-    <div class="bar"><div class="v">${fmt(l)}</div><div class="col" style="height:${h(l)}px;background:${dc}"></div><div class="yr">latest</div></div></div>
+    <div class="bar"><div class="v">${fmt(b)}</div><div class="col" style="height:${h(b)}px;background:var(--faint)"></div><div class="yr">${by}</div></div>
+    <div class="bar"><div class="v">${fmt(l)}</div><div class="col" style="height:${h(l)}px;background:${dc}"></div><div class="yr">${ly}</div></div></div>
     <div class="delta"><div class="big" style="color:${dc}">${pc==null?'n/a':sg+pc+'%'}</div><div class="lb">unique Medicare<br>beneficiaries</div></div></div>
-    ${p.winddown_status==='dropout_no_medicare'?'<div class="note" style="margin-top:8px;color:var(--crit)">Billed in the base year, none in the latest — stopped.</div>':''}`;
+    ${p.winddown_status==='dropout_no_medicare'?`<div class="note" style="margin-top:8px;color:var(--crit)">Billed in ${by}, none in ${ly} — stopped.</div>`:''}`;
 }
 function closeDetail(){$('#detail').classList.remove('open');}
 window.closeDetail=closeDetail;
@@ -558,7 +645,10 @@ function wire(){
   $('#fThin').onchange=e=>{F.thin=e.target.checked;applyFilter();};
   $('#exportBtn').onclick=()=>{if(!curFiltered.length){toast('No pins match');return;}
     copyText(toCSV(),curFiltered.length+' providers copied as CSV','Vulnerable PCP list (CSV)');};
-  $('#copyPlay').onclick=()=>copyText(STATE.talking_points.map(t=>t.replace(/\*\*/g,'')).join('\n\n'),'Talking points copied','Payer talking points');
+  $('#payerSelect').onchange=renderPlaybook;
+  $('#copyPlay').onclick=()=>copyText((curTalkingPoints||STATE.talking_points).map(t=>t.replace(/\*\*/g,'')).join('\n\n'),'Talking points copied','Payer talking points');
+  $('#zipBtn').onclick=searchZip;
+  $('#zipInput').onkeydown=e=>{if(e.key==='Enter')searchZip();};
   $('#railToggle').onclick=()=>$('#rail').classList.toggle('open');
   $('#copyClose').onclick=()=>$('#copybox').classList.remove('show');
   $('#themeBtn').onclick=toggleTheme;

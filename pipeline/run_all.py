@@ -19,6 +19,7 @@ import time
 import step1_carecompare
 import step2_partb
 import step3_geocode
+import step5_payers
 import fetch_boundaries
 import step4_build
 import build_map
@@ -30,6 +31,7 @@ def main() -> None:
         ("step1 carecompare", step1_carecompare),
         ("step2 partb", step2_partb),
         ("step3 geocode", step3_geocode),
+        ("step5 payers (MA enrollment)", step5_payers),
         ("fetch boundaries", fetch_boundaries),
         ("step4 build", step4_build),
         ("build map", build_map),
