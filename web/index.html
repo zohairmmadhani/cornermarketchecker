@@ -155,6 +155,10 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
 .tp:nth-child(2){border-left-color:var(--warn)}
 .tp:nth-child(3){border-left-color:var(--accent)}
 .tp strong{font-weight:700}
+.ec-row{padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--panel);
+  font-size:11.5px;cursor:pointer;margin-bottom:4px;color:var(--muted)}
+.ec-row:hover{border-color:var(--accent)}
+.ec-row b{color:var(--fg)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:10px;border-radius:10px;
   border:1px solid var(--accent);background:var(--accent);color:#fff;font-weight:600;font-size:13px;cursor:pointer}
 .btn.ghost{background:var(--panel);color:var(--fg);border-color:var(--line)}
@@ -294,7 +298,10 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
       <div class="block collap" id="playBlock">
         <div class="hd"><h2>⚑ Payer playbook</h2><span class="chev">▾</span></div>
         <div class="body2" style="display:flex;flex-direction:column;gap:9px">
+          <div class="field"><label>Pitch tailored for</label>
+            <select class="mini" id="payerSelect"></select></div>
           <div class="playbook" id="playbook"></div>
+          <div id="payerCounties"></div>
           <button class="btn ghost" id="copyPlay">⧉ Copy talking points</button>
         </div>
       </div>
@@ -323,12 +330,6 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
           <label class="toggle"><input type="checkbox" id="fThin"><span>Only thin local supply</span><span class="dot" style="background:var(--warn)"></span></label>
           <button class="btn" id="exportBtn">⧉ Copy this list as CSV</button>
         </div>
-      </div>
-
-      <div class="block collap" id="targetBlock">
-        <div class="hd"><h2>Expand next</h2><span class="mini">FPA states</span></div>
-        <div class="body2"><div class="targets" id="targets"></div>
-          <div class="footnote" style="margin-top:6px">NP full-practice-authority states, ranked by winding-down PCPs. Click to view.</div></div>
       </div>
 
       <div class="block collap" id="srcBlock">
@@ -402,7 +403,7 @@ async function j(f){
 
 async function boot(){
   SUMMARY=await j('summary.json');
-  buildSwatches();buildSelect();buildSources();buildTargets();
+  buildSwatches();buildSelect();buildSources();
   $('#asof').textContent='CMS '+(SUMMARY.sources[0]?.modified||'');
   wire();
   const def=SUMMARY.corner_active?.[0]||SUMMARY.state_list[0];
@@ -432,7 +433,7 @@ async function selectState(st){
   const s=SUMMARY.states[st];
   STATE=await j('states/'+st+'.json');
   curPins=STATE.pins;
-  renderStats(st,s);renderPlaybook();renderNeed();
+  renderStats(st,s);buildPayerSelect();renderPlaybook();renderNeed();
   drawLayers();applyFilter();
   if(STATE.bbox){const[a,b,c,d]=STATE.bbox;map.flyToBounds([[b,a],[d,c]],{padding:[40,40],duration:.5});}
 }
@@ -452,8 +453,27 @@ function renderStats(st,s){
   $('#n_pins').textContent=s.vulnerable;
 }
 
+function buildPayerSelect(){
+  const sel=$('#payerSelect');
+  sel.innerHTML='<option value="all">All payers · market overview</option>'
+    +(STATE.payers||[]).map((p,i)=>`<option value="${i}">${p.name} · ${p.state_members.toLocaleString()} MA members</option>`).join('');
+  sel.value='all';
+}
+let curTalkingPoints=[];
 function renderPlaybook(){
-  $('#playbook').innerHTML=STATE.talking_points.map(t=>`<div class="tp">${boldmd(t)}</div>`).join('');
+  const v=($('#payerSelect')&&$('#payerSelect').value)||'all';
+  let tps, ec='';
+  if(v==='all'||!STATE.payers){tps=STATE.talking_points;}
+  else{
+    const p=STATE.payers[+v];tps=p.talking_points;
+    if(p.exposed_counties.length){
+      ec=`<div class="footnote" style="margin:1px 0 3px">${p.name}'s most exposed counties — click to view:</div>`
+        +p.exposed_counties.map(c=>`<div class="ec-row" onclick="highlightCounty('${c.fips}')"><b>${c.county.replace(' County','')}</b> · ${c.members.toLocaleString()} members (${c.share}% of MA) · ${c.winddown} retiring</div>`).join('');
+    }
+  }
+  curTalkingPoints=tps;
+  $('#playbook').innerHTML=tps.map(t=>`<div class="tp">${boldmd(t)}</div>`).join('');
+  $('#payerCounties').innerHTML=ec;
 }
 function renderNeed(){
   const rows=STATE.counties_need.filter(c=>c.vulnerable>0).slice(0,8);
@@ -625,7 +645,8 @@ function wire(){
   $('#fThin').onchange=e=>{F.thin=e.target.checked;applyFilter();};
   $('#exportBtn').onclick=()=>{if(!curFiltered.length){toast('No pins match');return;}
     copyText(toCSV(),curFiltered.length+' providers copied as CSV','Vulnerable PCP list (CSV)');};
-  $('#copyPlay').onclick=()=>copyText(STATE.talking_points.map(t=>t.replace(/\*\*/g,'')).join('\n\n'),'Talking points copied','Payer talking points');
+  $('#payerSelect').onchange=renderPlaybook;
+  $('#copyPlay').onclick=()=>copyText((curTalkingPoints||STATE.talking_points).map(t=>t.replace(/\*\*/g,'')).join('\n\n'),'Talking points copied','Payer talking points');
   $('#zipBtn').onclick=searchZip;
   $('#zipInput').onkeydown=e=>{if(e.key==='Enter')searchZip();};
   $('#railToggle').onclick=()=>$('#rail').classList.toggle('open');

@@ -72,6 +72,19 @@ Auto-generated from each state's real numbers, built around three levers:
 
 Plus an **immediate ask** and a **counties-most-in-need** ranking.
 
+**Payer-specific mode (Method 2):** the playbook has a "Pitch tailored for"
+dropdown. Pick an insurer (UnitedHealthcare, Humana, Aetna/CVS, …) and it
+rewrites the talking points for that payer using CMS Medicare Advantage
+enrollment — their total MA members in the state, how many live in counties
+where solo PCPs are retiring, and their most-exposed counties (with that
+insurer's local MA share). Built by `pipeline/step5_payers.py` and joined by
+county. It's a market-level exposure estimate (which counties hold the
+insurer's members), not a claim that a specific retiring doctor is in their
+network — see the two-method note in the project history for the distinction.
+
+Plus a **clinic site finder**: enter any ZIP to jump to that county, see its
+stats, and get a placement read for a new NP clinic.
+
 ## Where to expand next
 
 Among **Full Practice Authority** states (where NPs can independently own a
@@ -92,6 +105,7 @@ each with a direct download link to the authoritative file).
 |---|---|---|
 | CMS **Doctors & Clinicians National Downloadable File** (Care Compare) | Layers 1 & 3: solo status, specialty, grad year, address | updated 2026-10-30 |
 | CMS **Medicare Physician & Other Practitioners — by Provider** | Layer 2: unique Medicare beneficiaries per NPI (latest 2 yrs) | CY2024 (rel. 2026-05-21) vs CY2022 |
+| CMS **Monthly Enrollment by Contract/Plan/State/County (CPSC)** | Payer playbook: Medicare Advantage members by insurer × county | 2026-11 |
 | U.S. Census **ACS 5-yr B01003** | population denominators by ZIP | 2022 |
 | U.S. Census **Gazetteer / ZCTA↔County / TIGERweb** | centroids, county roll-ups, boundaries | 2023 / 2020 |
 

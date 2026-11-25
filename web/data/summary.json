@@ -29,6 +29,12 @@
    "landing": "https://data.cms.gov/provider-summary-by-type-of-service/medicare-physician-other-practitioners/medicare-physician-other-practitioners-by-provider"
   },
   {
+   "name": "CMS Medicare Advantage enrollment by county (CPSC, 2026-11)",
+   "modified": "2026-11",
+   "url": "https://www.cms.gov/files/zip/monthly-enrollment-cpsc-november-2026.zip",
+   "landing": "https://www.cms.gov/data-research/statistics-trends-and-reports/medicare-advantagepart-d-contract-and-enrollment-data/monthly-enrollment-contract/plan/state/county"
+  },
+  {
    "name": "U.S. Census ACS 5-year 2022 \u2014 population (table B01003)",
    "modified": "2022",
    "url": "https://www2.census.gov/programs-surveys/acs/summary_file/2022/table-based-SF/data/5YRData/acsdt5y2022-b01003.dat",

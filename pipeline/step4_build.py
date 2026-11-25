@@ -257,6 +257,59 @@ def zip_to_county() -> dict:
             if r["zcta"] and r["county_fips"]}
 
 
+FIPS2 = {v: k for k, v in C.STATE_FIPS.items()}
+
+
+def payer_talking_points(payer, st, state_members, exposed, ec) -> list[str]:
+    name = C.STATE_NAMES[st]
+    top = ", ".join(f"{c['county'].replace(' County','')} ({c['members']:,} members, "
+                    f"{c['winddown']} retiring)" for c in ec[:3])
+    tp = [f"**{payer} exposure:** ~{state_members:,} {payer} Medicare Advantage members in {name}"
+          + (f"; ~{exposed:,} live in counties where solo PCPs are retiring."
+             if exposed else "; few sit in counties with active retirements yet.")]
+    if top:
+        tp.append(f"**Most exposed:** {top}. As these PCPs exit, {payer}'s members drift to "
+                  f"hospital clinics at {C.FACILITY_FEE_MULTIPLIER} more; Corner NPs hold them at {C.NP_RATE_RANGE}.")
+    if ec:
+        tp.append(f"**Where to act for {payer}:** a Corner clinic in {ec[0]['county']} first — "
+                  f"{ec[0]['winddown']} solo PCPs winding down with {ec[0]['members']:,} of your members nearby.")
+    return tp
+
+
+def build_state_payers(st, cty, cp_all, county_ma_tot) -> list[dict]:
+    """Per major insurer in the state: members, exposed members, top exposed counties."""
+    fips2 = FIPS2.get(st)
+    if not fips2:
+        return []
+    cps = cp_all.filter(pl.col("county_fips").str.starts_with(fips2))
+    if cps.height == 0:
+        return []
+    wd = cty.select("county_fips", "county_name", "winddown")
+    cps = (cps.join(county_ma_tot, on="county_fips", how="left")
+              .join(wd, on="county_fips", how="left")
+              .with_columns(pl.col("winddown").fill_null(0)))
+    sm = (cps.group_by("payer").agg(pl.col("members").sum().alias("state_members"))
+             .sort("state_members", descending=True).head(10))
+    exp = (cps.filter(pl.col("winddown") > 0).group_by("payer")
+              .agg(pl.col("members").sum().alias("exposed")))
+    exp_map = {r["payer"]: int(r["exposed"]) for r in exp.iter_rows(named=True)}
+    out = []
+    for r in sm.iter_rows(named=True):
+        payer = r["payer"]
+        exposed = exp_map.get(payer, 0)
+        ec = (cps.filter((pl.col("payer") == payer) & (pl.col("winddown") > 0))
+                 .with_columns((pl.col("members") / pl.col("ma_total") * 100).round(1).alias("share"))
+                 .sort("members", descending=True).head(5))
+        exposed_counties = [{"county": x["county_name"], "fips": x["county_fips"],
+                             "members": int(x["members"]), "share": x["share"],
+                             "winddown": int(x["winddown"])} for x in ec.iter_rows(named=True)]
+        out.append({"name": payer, "state_members": int(r["state_members"]),
+                    "exposed_members": exposed, "exposed_counties": exposed_counties,
+                    "talking_points": payer_talking_points(payer, st, int(r["state_members"]),
+                                                           exposed, exposed_counties)})
+    return out
+
+
 # --------------------------------------------------------------------------
 # main
 # --------------------------------------------------------------------------
@@ -270,6 +323,8 @@ def main() -> None:
         .group_by("state").agg(pl.col("population").sum().alias("population")))
 
     print(f"[step4] pins positioned: {pins.height:,}")
+    cp_all = pl.read_parquet(os.path.join(C.PROC_DIR, "county_payers.parquet"))
+    county_ma_tot = cp_all.group_by("county_fips").agg(pl.col("members").sum().alias("ma_total"))
     county_supply = all_county_supply()
     us_counties = json.load(open(os.path.join(C.GEO_DIR, "us_counties.geojson")))
     counties_by_state: dict[str, list] = {}
@@ -306,11 +361,12 @@ def main() -> None:
         # bbox
         la = sp["lat"].to_list(); lo = sp["lon"].to_list()
         bbox = [min(lo), min(la), max(lo), max(la)]
+        payers = build_state_payers(st, cty, cp_all, county_ma_tot)
         state_file = {
             "state": st, "name": C.STATE_NAMES[st],
             "pins": _round_features([pin_feature(r) for r in sp.iter_rows(named=True)], 5),
             "counties": _round_features(counties_by_state.get(st, []), 3),
-            "talking_points": tps, "counties_need": need, "bbox": bbox,
+            "talking_points": tps, "payers": payers, "counties_need": need, "bbox": bbox,
         }
         json.dump(state_file, open(os.path.join(C.WEB_STATES, f"{st}.json"), "w"))
 
@@ -371,7 +427,8 @@ def main() -> None:
         "medicare_at_risk_total": int(pins.filter(pl.col("is_winddown"))["benes_latest"].fill_null(0).sum()),
         "fpa_vulnerable": int(sum(s["vulnerable"] for s in states_out.values() if s["fpa"])),
     }
-    sources = [vint.get(k) for k in ("care_compare", "partb_latest", "partb_base") if vint.get(k)]
+    sources = [vint.get(k) for k in ("care_compare", "partb_latest", "partb_base", "ma_enrollment")
+               if vint.get(k)]
     sources += [
         {"name": f"U.S. Census ACS 5-year {C.ACS_YEAR} — population (table B01003)",
          "modified": f"{C.ACS_YEAR}", "url": C.ACS_POP_URL, "landing": C.ACS_LANDING},
