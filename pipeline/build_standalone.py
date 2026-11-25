@@ -6,7 +6,7 @@ Reads the built web/index.html (Leaflet CSS already inlined) and injects
 window.__EMBED__ = {summary, states:{...}} before the app script. The page's
 data loader (j()) reads from __EMBED__ when present, else fetch().
 
-Output: web/supply_cliff_radar.html
+Output: web/open_territory.html
 """
 from __future__ import annotations
 import json
@@ -14,7 +14,7 @@ import os
 import config as C
 
 INDEX = os.path.join(C.WEB_DIR, "index.html")
-OUT = os.path.join(C.WEB_DIR, "supply_cliff_radar.html")
+OUT = os.path.join(C.WEB_DIR, "open_territory.html")
 
 
 def main() -> None:

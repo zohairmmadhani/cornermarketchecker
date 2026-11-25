@@ -1,4 +1,4 @@
-<title>Supply Cliff Radar</title>
+<title>Open Territory</title>
 <style>
 /*__LEAFLET_CSS__*/
 
@@ -98,7 +98,9 @@ header{display:flex;align-items:center;gap:12px;padding:9px 16px;background:var(
 .badge.fpa{background:var(--ok-wash);color:var(--ok)}
 .badge.non{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
 
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lede{margin:0;font-size:13px;line-height:1.5;color:var(--fg)}
+.lede b{color:var(--crit)}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .stat{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:10px 11px}
 .stat .n{font-family:var(--display);font-size:21px;font-weight:600;letter-spacing:-.02em;line-height:1}
 .stat .l{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.25}
@@ -245,7 +247,7 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
   <header>
     <button class="iconbtn" id="railToggle">☰</button>
     <div class="brand"><div class="logo">C</div>
-      <div><h1>Supply Cliff Radar</h1><p>Retiring solo PCPs · Corner Health</p></div></div>
+      <div><h1>Open Territory</h1><p>Where retiring solo doctors leave patients for a new NP clinic</p></div></div>
     <div class="hspacer"></div>
     <div class="statepick">
       <label for="stateSelect">State</label>
@@ -257,8 +259,8 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
   <div class="body">
     <aside class="rail" id="rail">
       <div class="block">
-        <div class="stateline"><h2 id="stName">—</h2><span id="stBadge"></span>
-          <span class="mini" id="stNational" style="margin-left:auto"></span></div>
+        <div class="stateline"><h2 id="stName">—</h2><span id="stBadge"></span></div>
+        <p class="lede" id="lede"></p>
         <div class="stats" id="stats"></div>
       </div>
 
@@ -279,9 +281,8 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
         <div class="hd"><h2>Layers &amp; filters</h2><span class="chev">▾</span></div>
         <div class="body2" style="display:flex;flex-direction:column;gap:9px">
           <div class="ctl">
-            <label class="toggle"><input type="checkbox" id="L_pins" checked><span>Vulnerable solo PCPs</span><span class="sw" id="n_pins"></span></label>
-            <label class="toggle"><input type="checkbox" id="L_hex" checked><span>PCP supply density</span><span class="sw">hex</span></label>
-            <label class="toggle"><input type="checkbox" id="L_county" checked><span>County outlines</span></label>
+            <label class="toggle"><input type="checkbox" id="L_pins" checked><span>Retiring doctors</span><span class="sw" id="n_pins"></span></label>
+            <label class="toggle"><input type="checkbox" id="L_supply" checked><span>Primary-care supply</span><span class="sw">counties</span></label>
           </div>
           <div class="field"><label>Priority tier</label>
             <div class="seg" id="segTier"><button data-v="all" aria-pressed="true">All</button>
@@ -316,13 +317,12 @@ select.mini{appearance:none;width:100%;padding:8px 10px;border-radius:9px;border
         <div class="countpill"><b id="visCount">0</b> pins · <span id="asof"></span></div>
       </div>
       <div class="legendbox">
-        <div><b>Pin</b> = Medicare trend</div>
-        <div class="row"><span class="key" style="background:var(--crit);border-color:var(--crit)"></span>Winding down</div>
-        <div class="row"><span class="key" style="background:var(--ok);border-color:var(--ok)"></span>Stable</div>
-        <div class="row"><span class="key" style="background:var(--unknown);border-color:var(--unknown)"></span>No data</div>
-        <div class="row" style="margin-top:6px"><b>Ring</b> = thin supply · <b>size</b> = panel</div>
-        <div style="margin-top:6px"><b>Hex</b> = PCP density</div>
-        <div class="swatches" id="hexSwatches"></div>
+        <div><b>Dots</b> = solo doctors · size = panel</div>
+        <div class="row"><span class="key" style="background:var(--crit);border-color:var(--crit)"></span>Losing patients (winding down)</div>
+        <div class="row"><span class="key" style="background:var(--ok);border-color:var(--ok)"></span>Still stable</div>
+        <div class="row" style="margin-top:7px"><b>County shade</b> = primary-care supply</div>
+        <div class="swatches" id="supplySwatches"></div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--faint);margin-top:2px"><span>few doctors</span><span>well-served</span></div>
       </div>
       <div id="loading"><div class="box"><div class="spin"></div><div>Loading CMS &amp; Census data…</div></div></div>
     </main>
@@ -348,8 +348,10 @@ const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clea
 const boldmd=s=>s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
 
 let SUMMARY=null, STATE=null, curPins=[], curFiltered=[];
-const HEX_STOPS=[{max:0,c:'#d98a3d'},{max:2,c:'#e6c488'},{max:5,c:'#bcd0c6'},{max:10,c:'#7fc0b2'},{max:25,c:'#3ea796'},{max:1e9,c:'#126b60'}];
-const hexColor=n=>{for(const s of HEX_STOPS)if(n<=s.max)return s.c;return '#126b60';};
+// county shade = active PCPs per 10k residents (amber=few, teal=many)
+const SUPPLY_STOPS=[{max:3,c:'#e0954a'},{max:6,c:'#edc793'},{max:9,c:'#cdd6cf'},{max:14,c:'#8fc0b0'},{max:1e9,c:'#4e9e8a'}];
+const supplyColor=v=>{if(v==null)return gv('--county');for(const s of SUPPLY_STOPS)if(v<=s.max)return s.c;return '#4e9e8a';};
+const countyStyle=f=>({color:gv('--county-line'),weight:.6,fillColor:supplyColor(f.properties.supply_per_10k),fillOpacity:.5});
 const trendColor=s=>(s==='active_winddown'||s==='dropout_no_medicare')?gv('--crit'):(s==='stable_or_growing')?gv('--ok'):gv('--unknown');
 const pinRadius=b=>b==null?4.5:Math.max(4.5,Math.min(15,Math.sqrt(b)/2.1));
 
@@ -358,7 +360,7 @@ L.control.zoom({position:'bottomright'}).addTo(map);
 const paneCty=map.createPane('cty');paneCty.style.zIndex=350;
 const paneHex=map.createPane('hex');paneHex.style.zIndex=360;
 const panePins=map.createPane('pins');panePins.style.zIndex=450;
-let ctyLayer,hexLayer,pinLayer;
+let ctyLayer,pinLayer;
 
 const F={tier:'all',spec:'all',wind:false,thin:false};
 
@@ -410,18 +412,15 @@ async function selectState(st){
 
 function renderStats(st,s){
   $('#stName').textContent=s.name;
-  const bmap={active:['active','Corner market'],expansion:['expansion','Planned'],fpa:['fpa','NP full practice authority'],non_fpa:['non','Restricted practice']};
+  const bmap={active:['active','Corner market'],expansion:['expansion','Planned'],fpa:['fpa','NP can own a clinic'],non_fpa:['non','NP ownership restricted']};
   const[cls,lbl]=bmap[s.corner_status];
   $('#stBadge').innerHTML=`<span class="badge ${cls}">${lbl}</span>`;
-  $('#stNational').textContent=`${SUMMARY.national.vulnerable_total.toLocaleString()} nationwide`;
+  $('#lede').innerHTML=s.lede.replace(/^(\d[\d,]*)/,'<b>$1</b>')
+    +` <span style="color:var(--faint)">(${SUMMARY.national.winddown_total.toLocaleString()} are winding down across ${SUMMARY.national.states_covered} states.)</span>`;
   $('#stats').innerHTML=`
-    <div class="stat accent"><div class="n tnum">${s.vulnerable}</div><div class="l">Vulnerable solo PCPs</div></div>
-    <div class="stat crit"><div class="n tnum">${s.winddown}</div><div class="l">Winding down</div></div>
-    <div class="stat warn"><div class="n tnum">${s.tier_a}</div><div class="l">Tier A · act now</div></div>
-    <div class="stat"><div class="n tnum">${fmt(s.active_pcps)}</div><div class="l">Active PCPs</div></div>
-    <div class="stat"><div class="n tnum">${s.pcp_per_10k??'—'}</div><div class="l">PCPs / 10k</div></div>
-    <div class="stat"><div class="n tnum">${fmt(s.medicare_at_risk)}</div><div class="l">Medicare at risk</div></div>
-    <div class="stat wide"><div class="n tnum" style="font-size:15px">${s.compliance_zips} ZIPs · ${s.shortage_counties} counties</div><div class="l">2+ winding down / PCP shortage</div></div>`;
+    <div class="stat crit"><div class="n tnum">${s.winddown}</div><div class="l">Doctors winding down</div></div>
+    <div class="stat accent"><div class="n tnum">~${Math.round(s.est_patients_at_risk/1000)}k</div><div class="l">Patients need a new PCP</div></div>
+    <div class="stat"><div class="n tnum">${s.vulnerable}</div><div class="l">On watch list (66+)</div></div>`;
   $('#n_pins').textContent=s.vulnerable;
 }
 
@@ -440,14 +439,12 @@ function renderNeed(){
 }
 
 function drawLayers(){
-  [ctyLayer,hexLayer,pinLayer].forEach(l=>{if(l)map.removeLayer(l);});
+  [ctyLayer,pinLayer].forEach(l=>{if(l)map.removeLayer(l);});
   ctyLayer=L.geoJSON({type:'FeatureCollection',features:STATE.counties},{pane:'cty',interactive:true,
-    style:{color:gv('--county-line'),weight:.8,fillColor:gv('--county'),fillOpacity:.6},
-    onEachFeature:(f,l)=>l.bindTooltip(f.properties.NAME,{sticky:true})});
-  if($('#L_county').checked)ctyLayer.addTo(map);
-  hexLayer=L.geoJSON({type:'FeatureCollection',features:STATE.hexes},{pane:'hex',interactive:false,
-    style:f=>({stroke:false,fillColor:hexColor(f.properties.pcp_count),fillOpacity:.5})});
-  if($('#L_hex').checked)hexLayer.addTo(map);
+    style:countyStyle,
+    onEachFeature:(f,l)=>{const v=f.properties.supply_per_10k;
+      l.bindTooltip(`<b>${f.properties.NAME}</b><br>${v!=null?v+' PCPs / 10k residents':'no data'}`,{sticky:true});}});
+  if($('#L_supply').checked)ctyLayer.addTo(map);
   pinLayer=L.layerGroup([],{pane:'pins'}).addTo(map);
 }
 
@@ -531,7 +528,7 @@ function buildSources(){
   const m=SUMMARY.methodology;
   $('#methodology').innerHTML=`<b>Definitions.</b> Vulnerable: ${m.vulnerable}. Winding down: ${m.winddown}. Thin supply: ${m.thin_supply}. Shortage: ${m.shortage_county}. Targets: ${m.targets}. MVP — verify first.`;
 }
-function buildSwatches(){$('#hexSwatches').innerHTML=HEX_STOPS.map(x=>`<i style="background:${x.c}"></i>`).join('');}
+function buildSwatches(){$('#supplySwatches').innerHTML=SUPPLY_STOPS.map(x=>`<i style="background:${x.c}"></i>`).join('');}
 
 /* export */
 const COLS=[['priority_tier','tier'],['npi','npi'],['name','name'],['credential','cred'],['specialty','specialty'],
@@ -551,8 +548,7 @@ window.copyText=copyText;
 function wire(){
   $('#stateSelect').onchange=e=>selectState(e.target.value);
   $('#L_pins').onchange=applyFilter;
-  $('#L_hex').onchange=e=>{e.target.checked?hexLayer.addTo(map):map.removeLayer(hexLayer);};
-  $('#L_county').onchange=e=>{e.target.checked?ctyLayer.addTo(map):map.removeLayer(ctyLayer);};
+  $('#L_supply').onchange=e=>{e.target.checked?ctyLayer.addTo(map):map.removeLayer(ctyLayer);};
   document.querySelectorAll('#segTier button').forEach(b=>b.onclick=()=>{
     document.querySelectorAll('#segTier button').forEach(x=>x.setAttribute('aria-pressed','false'));
     b.setAttribute('aria-pressed','true');F.tier=b.dataset.v;applyFilter();});
@@ -571,7 +567,7 @@ function toggleTheme(){
   const r=document.documentElement;
   const cur=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
   r.setAttribute('data-theme',cur==='dark'?'light':'dark');
-  if(ctyLayer)ctyLayer.setStyle({color:gv('--county-line'),fillColor:gv('--county')});
+  if(ctyLayer)ctyLayer.setStyle(countyStyle);
   applyFilter();
 }
 window.__dbg={open:(i=0)=>{const f=curFiltered[i];if(f)openDetail(f.properties,[f.geometry.coordinates[1],f.geometry.coordinates[0]]);}};
