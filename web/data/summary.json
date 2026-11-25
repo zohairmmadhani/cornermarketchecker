@@ -1,0 +1,32 @@
+{
+  "generated": "2026-11-25",
+  "scope_states": [
+    "AZ",
+    "WA"
+  ],
+  "grad_year_cutoff": 1986,
+  "catchment_radius_mi": 4.0,
+  "decay_years": [
+    2022,
+    2024
+  ],
+  "vulnerable_total": 188,
+  "vulnerable_by_state": {
+    "AZ": 105,
+    "WA": 83
+  },
+  "active_winddown": 63,
+  "dropout_no_medicare": 4,
+  "active_pcps_positioned": 9770,
+  "median_nearby_active_pcps": 100.5,
+  "thin_local_supply": 22,
+  "thin_supply_threshold": 20,
+  "tier_a": 9,
+  "tier_b": 67,
+  "tier_c": 112,
+  "specialty_breakdown": {
+    "GENERAL PRACTICE": 22,
+    "FAMILY PRACTICE": 82,
+    "INTERNAL MEDICINE": 84
+  }
+}

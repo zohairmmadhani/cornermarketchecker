@@ -1,0 +1,14 @@
+# Raw source pulls + regenerable intermediates (reproducible via pipeline)
+data/raw/
+data/processed/
+*.csv.gz
+
+# Python
+venv/
+__pycache__/
+*.pyc
+pipeline/__pycache__/
+
+# OS / editors
+.DS_Store
+.ipynb_checkpoints/
